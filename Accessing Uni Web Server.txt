@@ -1,0 +1,7 @@
+http://soit-usrweb-pro-1.ucc.usyd.edu.au/~cpha3003/<home of public_html>
+
+the files inside the directory 'public_html' are the ones that can be accessed after the path 'cpha3003'
+
+so to access the website for assignment 3 the url would be
+
+http://soit-usrweb-pro-1.ucc.usyd.edu.au/~cpha3003/PeerPark/index.php
