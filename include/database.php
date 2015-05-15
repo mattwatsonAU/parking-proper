@@ -42,10 +42,38 @@ function connect($file = 'config.ini') {
  * @return boolean True is login details are correct
  */
 function checkLogin($name,$pass) {
-    // STUDENT TODO:
-    // Replace line below with code to validate details from the database
-    //
-    return ($name=='testuser' && $pass=='testpass');
+    
+    if($name=='testuser'){
+        return ($name=='testuser' && $pass=='testpass');
+    }else{
+
+    $db = connect();
+    try {
+
+        $stmt = $db->prepare('SELECT password
+                                FROM Member
+                                WHERE email=:name OR nickName=:name');
+
+        $stmt->bindValue(':name', $name);
+
+        $stmt->execute();
+        $results = $stmt->fetchColumn();
+   
+        $stmt->closeCursor();
+    } catch (PDOException $e) { 
+        print "Error finding user: " . $e->getMessage(); 
+        die();
+    }
+
+        if($results == $pass){
+            //Allow login if the password supplied in the text field 
+            //matches the password stored in the database for that user
+            return true;
+        }else{
+
+            return false;
+        }
+    }
 }
 
 /**
@@ -75,15 +103,24 @@ function getUserDetails($user) {
 
      $db = connect();
     try {
-        $stmt = $db->prepare('SELECT nameGiven, nameFamily
+        // $stmt = $db->prepare('SELECT nameGiven, nameFamily
+        //                         FROM Member
+        //                         WHERE memberNo = 1');
+
+        $stmt = $db->prepare('SELECT nameTitle, nameGiven, nameFamily
                                 FROM Member
-                                WHERE memberNo = 1');
+                                WHERE memberNo=:name');
+
+        //$stmt = $db->prepare('SELECT password FROM Member WHERE memberNo=:name');
+        $stmt->bindValue(':name', $user, PDO::PARAM_INT);
          // $stmt = $db->prepare('SELECT nameGiven, nameFamily
            //                      FROM Transcript JOIN UnitOfStudy USING (uosCode)
          //                       ORDER BY uosCode,year,semester');
 
         $stmt->execute();
         $results = $stmt->fetchAll();
+        
+
         //$results = $stmt->fetchAll();  // we expect a small result here - so Ok to use fetchAll()
         $stmt->closeCursor();
     } catch (PDOException $e) { 

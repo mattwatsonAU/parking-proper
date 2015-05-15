@@ -11,11 +11,15 @@ htmlHead();
 <?php
 try {
 
-    $details = getUserDetails($_SESSION['memberNo']);
-    print_r(details);
+    $details = getUserDetails(1);
+    //$details = getUserDetails($_SESSION['memberNo']);
+    //$details = getUserDetails(1);
+    //print_r($details[0][0]);
     echo '<h2>memberNo</h2> ',$details['memberNo'];
-    echo '<h2>Name</h2> ',$details[0][0];
-    echo '<h2>Name</h2> ',$details['nameFamily'];
+    //Working
+    echo '<h2>Name</h2> ', $details[0]['nametitle'], ' ', $details[0]['namegiven'], ' ', $details[0]['namefamily'];
+    //echo '<h2>eMail</h2> ',$details[0][1];
+    //echo '<h2>SURNAME</h2> ',$details[0]['namefamily'];
     //echo '<h2>Name</h2> ',$details['name'];
     //echo '<h2>eMail</h2> ',$details['email'];
     echo '<h2>Address</h2> ',$details['address'];
