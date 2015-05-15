@@ -107,7 +107,13 @@ function getUserDetails($user) {
         //                         FROM Member
         //                         WHERE memberNo = 1');
 
-        $stmt = $db->prepare('SELECT nameTitle, nameGiven, nameFamily
+
+
+        // $stmt = $db->prepare('SELECT nameTitle, nameGiven, nameFamily, memberNo, email
+        //                         FROM Member
+        //                         WHERE memberNo=:name');
+        $stmt = $db->prepare('SELECT nameTitle, nameGiven, nameFamily, memberNo, email, adrStreetNo, 
+                                adrStreet, adrCity, prefBay 
                                 FROM Member
                                 WHERE memberNo=:name');
 
@@ -127,7 +133,7 @@ function getUserDetails($user) {
         print "Error listing units: " . $e->getMessage(); 
         die();
     }
-    print_r($results);
+    //print_r($results);
     return $results;
 }
 
