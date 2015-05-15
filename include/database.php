@@ -96,23 +96,22 @@ function getUserDetails($user) {
 
 
 
-     $db = connect();
+    $db = connect();
     try {
         
-        $stmt = $db->prepare('SELECT nameTitle, nameGiven, nameFamily, memberNo, email, adrStreetNo, 
-                                adrStreet, adrCity, prefBay 
-                                FROM Member
-                                WHERE  email=:name');
-        //WHERE memberNo=:name OR email=:name');
-
-        $stmt->bindValue(':name', $user);
-
-        //  $stmt = $db->prepare('SELECT nameTitle, nameGiven, nameFamily, memberNo, email, adrStreetNo, 
+        // $stmt = $db->prepare('SELECT nameTitle, nameGiven, nameFamily, memberNo, email, adrStreetNo, 
         //                         adrStreet, adrCity, prefBay 
         //                         FROM Member
-        //                         WHERE memberNo=:name');
+        //                         WHERE  email=:name');
 
-        // $stmt->bindValue(':name', $user, PDO::PARAM_INT);
+        // $stmt->bindValue(':name', $user);
+
+         $stmt = $db->prepare('SELECT nameTitle, nameGiven, nameFamily, memberNo, email, adrStreetNo, 
+                                adrStreet, adrCity, prefBay 
+                                FROM Member
+                                WHERE memberNo=:name');
+
+        $stmt->bindValue(':name', $user, PDO::PARAM_INT);
          
 
         $stmt->execute();
@@ -123,7 +122,7 @@ function getUserDetails($user) {
         print "Error listing units: " . $e->getMessage(); 
         die();
     }
-    print_r($results);
+    //print_r($results);
     return $results;
 }
 
