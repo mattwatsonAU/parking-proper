@@ -11,8 +11,8 @@ htmlHead();
 <?php
 try {
 
-    $details = getUserDetails(1);
-    //$details = getUserDetails($_SESSION['memberNo']);
+    //$details = getUserDetails(1);
+    $details = getUserDetails($_SESSION['memberNo']);
     //$details = getUserDetails(1);
     //print_r($details[0][0]);
     echo '<h2>memberNo</h2> ',$details[0]['memberno'];

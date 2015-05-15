@@ -45,6 +45,8 @@ function checkLogin($name,$pass) {
     
     if($name=='testuser'){
         return ($name=='testuser' && $pass=='testpass');
+    }else if($pass==''){
+        return false;
     }else{
 
     $db = connect();
@@ -65,14 +67,7 @@ function checkLogin($name,$pass) {
         die();
     }
 
-        if($results == $pass){
-            //Allow login if the password supplied in the text field 
-            //matches the password stored in the database for that user
-            return true;
-        }else{
-
-            return false;
-        }
+    return ($results == $pass);
     }
 }
 
@@ -103,37 +98,32 @@ function getUserDetails($user) {
 
      $db = connect();
     try {
-        // $stmt = $db->prepare('SELECT nameGiven, nameFamily
-        //                         FROM Member
-        //                         WHERE memberNo = 1');
-
-
-
-        // $stmt = $db->prepare('SELECT nameTitle, nameGiven, nameFamily, memberNo, email
-        //                         FROM Member
-        //                         WHERE memberNo=:name');
+        
         $stmt = $db->prepare('SELECT nameTitle, nameGiven, nameFamily, memberNo, email, adrStreetNo, 
                                 adrStreet, adrCity, prefBay 
                                 FROM Member
-                                WHERE memberNo=:name');
+                                WHERE  email=:name');
+        //WHERE memberNo=:name OR email=:name');
 
-        //$stmt = $db->prepare('SELECT password FROM Member WHERE memberNo=:name');
-        $stmt->bindValue(':name', $user, PDO::PARAM_INT);
-         // $stmt = $db->prepare('SELECT nameGiven, nameFamily
-           //                      FROM Transcript JOIN UnitOfStudy USING (uosCode)
-         //                       ORDER BY uosCode,year,semester');
+        $stmt->bindValue(':name', $user);
+
+        //  $stmt = $db->prepare('SELECT nameTitle, nameGiven, nameFamily, memberNo, email, adrStreetNo, 
+        //                         adrStreet, adrCity, prefBay 
+        //                         FROM Member
+        //                         WHERE memberNo=:name');
+
+        // $stmt->bindValue(':name', $user, PDO::PARAM_INT);
+         
 
         $stmt->execute();
         $results = $stmt->fetchAll();
         
-
-        //$results = $stmt->fetchAll();  // we expect a small result here - so Ok to use fetchAll()
         $stmt->closeCursor();
     } catch (PDOException $e) { 
         print "Error listing units: " . $e->getMessage(); 
         die();
     }
-    //print_r($results);
+    print_r($results);
     return $results;
 }
 
