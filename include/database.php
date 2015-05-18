@@ -275,7 +275,7 @@ function getCars($memebrNo) {
     $db = connect();
     try {
 
-         $stmt = $db->prepare('SELECT regno 
+         $stmt = $db->prepare('SELECT regno, name
                                 FROM Car
                                 WHERE memberNo=:memNo');
 
