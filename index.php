@@ -38,7 +38,7 @@ try {
 		echo '</thead>';
 		echo '<tbody>';
 		foreach($cars as $car) {
-			echo '<tr><td>',$car['car'],'</td></tr>';
+			echo '<tr><td>',$car['regno'],'</td></tr>';
 		}
 		echo '</tbody>';
 		echo '</table>';

@@ -271,11 +271,39 @@ function getBookingInfo($bookingID) {
 function getCars($memebrNo) {
     // STUDENT TODO:
     // Change lines below with code to retrieve the cars of the member from the database
-$results = array(
-        array('car'=> 'Gary'),
-        array('car'=> 'Harry' )
-    );
+
+    $db = connect();
+    try {
+
+         $stmt = $db->prepare('SELECT regno 
+                                FROM Car
+                                WHERE memberNo=:memNo');
+
+        $stmt->bindValue(':memNo', $memebrNo, PDO::PARAM_INT);
+         
+
+        $stmt->execute();
+        $results = $stmt->fetchAll();
+        
+        $stmt->closeCursor();
+    } catch (PDOException $e) { 
+        print "Error listing units: " . $e->getMessage(); 
+        die();
+    }
+    //print_r($results);
     return $results;
+
+
+
+
+
+
+//STATIC(FAKE) DATA
+// $results = array(
+//         array('car'=> 'Gary'),
+//         array('car'=> 'Harry' )
+//     );
+//     return $results;
 }
 
 ?>
