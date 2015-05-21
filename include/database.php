@@ -107,11 +107,11 @@ function getUserDetails($user) {
         // $stmt->bindValue(':name', $user);
 
          $stmt = $db->prepare('SELECT nameTitle, nameGiven, nameFamily, memberNo, email, adrStreetNo, 
-                                adrStreet, adrCity, prefBay 
+                                adrStreet, adrCity, prefBay, stat_nrOfBookings
                                 FROM Member
-                                WHERE memberNo=:name');
+                                WHERE memberNo=:memberNo');
 
-        $stmt->bindValue(':name', $user, PDO::PARAM_INT);
+        $stmt->bindValue(':memberNo', $user, PDO::PARAM_INT);
          
 
         $stmt->execute();
@@ -237,22 +237,70 @@ function makeBooking($memberNo,$car,$bayID,$bookingDate,$bookingHour,$duration) 
     // Replace lines below with code to create a booking and return the outcome
 
     /*if ($user != 'testuser') throw new Exception('Unknown user');*/
-   
+   $db = connect();
+
+   /*Check that the car fits the bayID requested*/
+   //Get the car dimensions
+try {
+        $stmt = $db->prepare('SELECT length, width, height FROM CarType NATURAL JOIN Car WHERE memberNo=:memberNo AND name=:car');
+
+        $stmt->bindValue(':memberNo', $memberNo);
+        $stmt->bindValue(':car', $car);
+
+        $stmt->execute();
+        
+        $carDimensions = $stmt->fetchAll();
+        
+        $stmt->closeCursor();
+
+
+
+    }catch (PDOException $e) { 
+        print "Error Fecthing Car Dimensions: " . $e->getMessage(); 
+        die();
+    }
+
+//Get the bay dimensions
+try {
+        $stmt = $db->prepare('SELECT length, width, height FROM ParkBay WHERE bayID=:bayID');
+
+        $stmt->bindValue(':bayID', $bayID);
+
+        $stmt->execute();
+        
+        $bayDimensions = $stmt->fetchAll();
+        
+        $stmt->closeCursor();
+
+
+
+    }catch (PDOException $e) { 
+        print "Error Fecthing Car Dimensions: " . $e->getMessage(); 
+        die();
+    }
+
+//Compare the car and bay dimensions
+    //$sizeFits = true;
+    for($i = 0; $i < 3; $i++){
+        if($carDimensions[0][$i] > $bayDimensions[0][$i]){
+
+            print "\nCar dimesions too large for bay";
+            return;
+        }
+        //print_r($carDimensions[0]);
+    }
+
+
 
 
 //Status: check bayID exists and the car exists for the memNO (STILL TODO)
 
 
 
-     $db = connect();
+     
     try {
         $stmt = $db->prepare('INSERT INTO Booking VALUES (DEFAULT, :bayID, :bookingDate, :bookingHour, :duration, :memberNo, :car)');
-        //OF THE FORM BELOW
         //INSERT INTO Booking VALUES (DEFAULT, 20, CURRENT_DATE, 9, 2, 1, 'Lance the Yaris')
-
-         // $stmt = $db->prepare('SELECT bookingID, bayID, car
-         //                        FROM Booking
-         //                        WHERE memberNo=:name');
 
         $stmt->bindValue(':bayID', $bayID);
         $stmt->bindValue(':bookingDate', $bookingDate);
@@ -265,42 +313,34 @@ function makeBooking($memberNo,$car,$bayID,$bookingDate,$bookingHour,$duration) 
         $success = 'success';
 
         $stmt->execute();
-        //MAYBE CHANGE THIS BIT
-        //$results = $stmt->fetchAll();
         
         $stmt->closeCursor();
-        $results['status'] = 'success';
         
-
-
-
     } catch (PDOException $e) { 
          $success = 'fail';
-        print "Error creating Booking: " . $e->getMessage(); 
-        die();
+         print "\nError creating booking: That booking already exists"; 
+         return;
+        //print "Error creating Booking: " . $e->getMessage(); 
+        //die();
     }
 
- try {
-        $stmt = $db->prepare('SELECT BookingID FROM Booking WHERE memberNo=:memberNo');
+ try {  //Use the unique triple of bayID, bookingDate and bookingHour to obtain the default created bookingID
+        $stmt = $db->prepare('SELECT BookingID FROM Booking WHERE bayID=:bayID AND bookingDate=:bookingDate AND bookingHour=:bookingHour');
         
-        $stmt->bindValue(':memberNo', $memberNo);
+        $stmt->bindValue(':bayID', $bayID);
+        $stmt->bindValue(':bookingDate', $bookingDate);
+        $stmt->bindValue(':bookingHour', $bookingHour);
     
 
         $stmt->execute();
-        //MAYBE CHANGE THIS BIT
+        
         $bookingID = $stmt->fetchColumn();
-        //print("WOOWOOOOWOWO");
-        //print_r($bookingID);
         
         $stmt->closeCursor();
-        //$results['status'] = 'success';
-        
-
-
 
     } catch (PDOException $e) { 
          $success = 'fail';
-        print "BAD " . $e->getMessage(); 
+        print "Error reading Booking ID: " . $e->getMessage(); 
         die();
     }
      // return array(
@@ -321,10 +361,8 @@ function makeBooking($memberNo,$car,$bayID,$bookingDate,$bookingHour,$duration) 
         
         $stmt->bindValue(':memberNo', $memberNo);
 
-        $success = 'success';
-
         $stmt->execute();
-        //MAYBE CHANGE THIS BIT
+        
         $results = $stmt->fetchColumn();
         
         $stmt->closeCursor();
@@ -339,10 +377,6 @@ function makeBooking($memberNo,$car,$bayID,$bookingDate,$bookingHour,$duration) 
         die();
     }
 
-    //print "Here";
-    //$results['status'];
-    //print_r($results);
-    //return $results;
      return array(
         'status'=>$success,
         'bookingID'=>$bookingID,
@@ -381,7 +415,7 @@ function getCars($memebrNo) {
     $db = connect();
     try {
 
-         $stmt = $db->prepare('SELECT regno, name
+         $stmt = $db->prepare('SELECT regno, name, make, model
                                 FROM Car
                                 WHERE memberNo=:memNo');
 
@@ -398,37 +432,26 @@ function getCars($memebrNo) {
     }
     //print_r($results);
     return $results;
-
-
-
-
-
-
-//STATIC(FAKE) DATA
-// $results = array(
-//         array('car'=> 'Gary'),
-//         array('car'=> 'Harry' )
-//     );
-//     return $results;
 }
 
 
 /** Return the count of the number of booking a user has*/
-function getNoBookings($memebrNo) {
-    
+function getNoBookings($memberNo) {
+    //Can alternatively just get the length of the $results array
 
     $db = connect();
     try {
 
          $stmt = $db->prepare('SELECT COUNT(bookingID)
                                 FROM Booking
-                                WHERE memberNo=:memNo');
+                                WHERE memberNo=:memberNo');
 
-        $stmt->bindValue(':memNo', $memebrNo, PDO::PARAM_INT);
+        $stmt->bindValue(':memberNo', $memberNo, PDO::PARAM_INT);
          
 
         $stmt->execute();
         $results = $stmt->fetchColumn();
+
         print_r($results);
         $stmt->closeCursor();
     } catch (PDOException $e) { 
@@ -438,16 +461,5 @@ function getNoBookings($memebrNo) {
     //print_r($results);
     return $results;
 
-
-
-
-
-
-//STATIC(FAKE) DATA
-// $results = array(
-//         array('car'=> 'Gary'),
-//         array('car'=> 'Harry' )
-//     );
-//     return $results;
 }
 ?>

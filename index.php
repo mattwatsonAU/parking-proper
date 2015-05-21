@@ -20,6 +20,7 @@ try {
     
     echo '<h2>eMail</h2> ',$details[0]['email'];
     echo '<h2>Address</h2> ',$details[0]['adrstreetno'], ' ', $details[0]['adrstreet'], ' ', $details[0]['adrcity'];
+    echo '<h2>Number of Bookings</h2> ',$details[0]['stat_nrofbookings'];
 
 
     echo '<h2>Preferred Bay</h2>',$details[0]['prefbay'];
@@ -51,14 +52,15 @@ try {
 		echo '</thead>';
 		echo '<tbody>';
 		foreach($cars as $car) {
-            echo '<tr><td>', 'Car Name: ', $car['name'],', Rego Number: ', $car['regno'], '</td></tr>';
+            echo '<tr><td>', 'Car Name: ', $car['name'],', Rego Number: ', $car['regno'], ', Make: ', $car['make'],  $car['regno'], ', Model: ', $car['model'], '</td></tr>';
+
 			//echo '<tr><td>', 'Rego Number: ', $car['regno'],'</td></tr>';
 		}
 		echo '</tbody>';
 		echo '</table>';
     }
 } catch (Exception $e) {
-    echo 'Cannot get bays status';
+    echo 'Cannot get cars status';
 }
 htmlFoot();
 ?>
