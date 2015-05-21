@@ -25,10 +25,23 @@ try {
     echo '<h2>Preferred Bay</h2>',$details[0]['prefbay'];
     //echo '<h2>Preferred Bay</h2>',$details[0]['prefbay'],' - ',$details[0]['prefbayname'];
     echo '<h2>Preferred Billing </h2>',$details['prefBillingNo'],' - ',$details['prefBillingName'];
-    echo '<h2>Total bookings</h2> ',$details['nbookings'];
+
+
+    //echo '<h2>Total bookings</h2> ',$details['nbookings'];
 } catch (Exception $e) {
     echo 'Cannot get user details';
 }
+
+try {
+
+   $numBookings = getNoBookings($_SESSION['memberNo']);
+    //echo '<h2>Total bookings</h2> ',$numBookings['nbookings'];
+   echo '<h2>Total bookings</h2> ',$numBookings[0];
+
+} catch (Exception $e) {
+    echo 'Cannot get bays status';
+}
+
 try {
    $cars = getCars($_SESSION['memberNo']);
    if(count($cars)>0) {

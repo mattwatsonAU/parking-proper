@@ -20,7 +20,11 @@ $booking = null;
 if ($submit) {
 echo 'Submitting booking.';
     try {
+
         $booking = makeBooking($_SESSION['memberNo'], $_REQUEST['carname'], $_REQUEST['bayID'], $_REQUEST['parkdate'], $_REQUEST['parktime'], $_REQUEST['duration']);
+
+
+
         if($booking['status'] == 'success') { 
             echo '<h2>Congratulations, you\'ve made a new new booking!';
 			echo '<h2>Booking ID</h2> ',$booking['bookingID'];
@@ -33,6 +37,7 @@ echo 'Submitting booking.';
         } else {
             echo '<h2>Sorry, couldn\t make a booking:</h2>', $booking['status'];
         }
+      
     } catch (Exception $e) {
             echo 'Couldn\'t submit booking. Please try again.';
     }

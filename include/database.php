@@ -237,15 +237,121 @@ function makeBooking($memberNo,$car,$bayID,$bookingDate,$bookingHour,$duration) 
     // Replace lines below with code to create a booking and return the outcome
 
     /*if ($user != 'testuser') throw new Exception('Unknown user');*/
-    return array(
-        'status'=>'success',
-        'bookingID'=>2,
-        'bayID'=>2,
-        'car'=>'Garry the Getz',
-	    'bookingDate'=>'25/07/14',
-	    'bookingHour'=>10,
-	    'duration'=>1,
-		'cost'=>1000
+   
+
+
+//Status: check bayID exists and the car exists for the memNO (STILL TODO)
+
+
+
+     $db = connect();
+    try {
+        $stmt = $db->prepare('INSERT INTO Booking VALUES (DEFAULT, :bayID, :bookingDate, :bookingHour, :duration, :memberNo, :car)');
+        //OF THE FORM BELOW
+        //INSERT INTO Booking VALUES (DEFAULT, 20, CURRENT_DATE, 9, 2, 1, 'Lance the Yaris')
+
+         // $stmt = $db->prepare('SELECT bookingID, bayID, car
+         //                        FROM Booking
+         //                        WHERE memberNo=:name');
+
+        $stmt->bindValue(':bayID', $bayID);
+        $stmt->bindValue(':bookingDate', $bookingDate);
+        $stmt->bindValue(':bookingHour', $bookingHour);
+        $stmt->bindValue(':duration', $duration);
+        $stmt->bindValue(':memberNo', $memberNo);
+        $stmt->bindValue(':car', $car);
+
+
+        $success = 'success';
+
+        $stmt->execute();
+        //MAYBE CHANGE THIS BIT
+        //$results = $stmt->fetchAll();
+        
+        $stmt->closeCursor();
+        $results['status'] = 'success';
+        
+
+
+
+    } catch (PDOException $e) { 
+         $success = 'fail';
+        print "Error creating Booking: " . $e->getMessage(); 
+        die();
+    }
+
+ try {
+        $stmt = $db->prepare('SELECT BookingID FROM Booking WHERE memberNo=:memberNo');
+        
+        $stmt->bindValue(':memberNo', $memberNo);
+    
+
+        $stmt->execute();
+        //MAYBE CHANGE THIS BIT
+        $bookingID = $stmt->fetchColumn();
+        //print("WOOWOOOOWOWO");
+        //print_r($bookingID);
+        
+        $stmt->closeCursor();
+        //$results['status'] = 'success';
+        
+
+
+
+    } catch (PDOException $e) { 
+         $success = 'fail';
+        print "BAD " . $e->getMessage(); 
+        die();
+    }
+     // return array(
+     //    'status'=>$success,
+     //    'bookingID'=>$bookingID,
+     //    'bayID'=>$bayID,
+     //    'car'=>$car,
+     //    'bookingDate'=>$bookingDate,
+     //    'bookingHour'=>$bookingHour,
+     //    'duration'=>$duration,
+     //    'cost'=>$cost
+     //     );
+
+
+    try {
+        $stmt = $db->prepare('SELECT hourly_rate FROM Member LEFT OUTER JOIN MembershipPlan ON (plan = title) WHERE memberNo=:memberNo');
+
+        
+        $stmt->bindValue(':memberNo', $memberNo);
+
+        $success = 'success';
+
+        $stmt->execute();
+        //MAYBE CHANGE THIS BIT
+        $results = $stmt->fetchColumn();
+        
+        $stmt->closeCursor();
+       
+       $cost = $results * $duration;
+
+
+
+    } catch (PDOException $e) { 
+         $success = 'fail';
+        print "Error creating Booking2: " . $e->getMessage(); 
+        die();
+    }
+
+    //print "Here";
+    //$results['status'];
+    //print_r($results);
+    //return $results;
+     return array(
+        'status'=>$success,
+        'bookingID'=>$bookingID,
+        'bayID'=>$bayID,
+        'car'=>$car,
+        'bookingDate'=>$bookingDate,
+        'bookingHour'=>$bookingHour,
+        'duration'=>$duration,
+        'cost'=>$cost
          );
 }
 
@@ -306,4 +412,42 @@ function getCars($memebrNo) {
 //     return $results;
 }
 
+
+/** Return the count of the number of booking a user has*/
+function getNoBookings($memebrNo) {
+    
+
+    $db = connect();
+    try {
+
+         $stmt = $db->prepare('SELECT COUNT(bookingID)
+                                FROM Booking
+                                WHERE memberNo=:memNo');
+
+        $stmt->bindValue(':memNo', $memebrNo, PDO::PARAM_INT);
+         
+
+        $stmt->execute();
+        $results = $stmt->fetchColumn();
+        print_r($results);
+        $stmt->closeCursor();
+    } catch (PDOException $e) { 
+        print "Error listing units: " . $e->getMessage(); 
+        die();
+    }
+    //print_r($results);
+    return $results;
+
+
+
+
+
+
+//STATIC(FAKE) DATA
+// $results = array(
+//         array('car'=> 'Gary'),
+//         array('car'=> 'Harry' )
+//     );
+//     return $results;
+}
 ?>
