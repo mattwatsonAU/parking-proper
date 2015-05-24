@@ -19,10 +19,10 @@ htmlHead();
         <label>Site <input readonly="readonly" name="BaySite" value="<?php echo $bay['site'];?>"/></label><br />
         <label>Description <input readonly="readonly" name="BayDescr" value="<?php echo $bay['description'];?>"/></label><br />
 		<label>Address <input readonly="readonly" name="Address" value="<?php echo $bay['address'];?>"/></label><br />
-		<label>Located At <input readonly="readonly" name="Location"  value="<?php echo $bay['locatedAt'];?>"/></label><br />
+		<label>Located At <input readonly="readonly" name="Location"  value="<?php echo $bay['located_at'];?>"/></label><br />
         <label>Latitude <input readonly="readonly" name="Latitude" value="<?php echo $bay['gps_lat'];?>"/></label><br />
 		<label>Longitude <input readonly="readonly" name="Longitude"  value="<?php echo $bay['gps_long'];?>"/></label><br />
-		<label>map URL<input readonly="readonly" name="mapURL"  value="<?php echo $bay['mapURL'];?>"/></label><br />
+		<label>map URL<input readonly="readonly" name="mapURL"  value="<?php echo $bay['mapurl'];?>"/></label><br />
 		<label>Width<input readonly="readonly"  name="Width" value="<?php echo $bay['width'];?>"/></label><br/>
 		<label>Height<input readonly="readonly" name="Height"  value="<?php echo $bay['height'];?>"/></label><br />
 		<label>Length<input readonly="readonly" name="Length"  value="<?php echo $bay['length'];?>"/></label><br />

@@ -1,0 +1,9 @@
+user - password		DEMO FOR USER DETAILS
+---------------------
+alf - sheepalf
+dot -  cowsdot
+num2 - 'virtuconnum2'
+drevil - onemilliondrevil
+mrmojo - yeahbabymrmojo
+drfoster - puddledrfoster
+

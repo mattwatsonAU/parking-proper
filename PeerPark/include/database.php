@@ -42,11 +42,32 @@ function connect($file = 'config.ini') {
  * @return boolean True is login details are correct
  */
 function checkLogin($name,$pass) {
-    // STUDENT TODO:
-    // Replace line below with code to validate details from the database
-    //
+	$db = connect();
 	
-    return ($name=='testuser' && $pass=='testpass');
+	try {
+		// prepare a parameterized query
+		$stmt = $db->prepare("SELECT email, nickname, password
+								FROM Member 
+								WHERE password = :password AND email = :name OR nickname = :name");
+							
+		$stmt->bindValue(':name', $name);
+		$stmt->bindValue(':password', $pass);
+		
+		// execute the query and check if a row exists with given parameters
+		$stmt->execute();
+		$results = $stmt->fetch(PDO::FETCH_ASSOC);
+		if ($results) {
+			$stmt->closeCursor();
+			return true;
+		}
+		else {
+			$stmt->closeCursor();
+			return false;
+		}
+	} catch (PDOException $e) {
+		print "Error finding username or password: " . $e->getMessage();
+		die();
+	}
 }
 
 /**
@@ -55,36 +76,62 @@ function checkLogin($name,$pass) {
  * @return array Details of user - see index.php
  */
 function getUserDetails($user) {
-    // STUDENT TODO:
-    // Replace lines below with code to validate details from the database
-    if ($user != 'testuser') throw new Exception('Unknown user');
-    $results = array();
-    // Example user data - this should come from a query
-    $results['memberNo'] = 1111;
-    $results['name'] = 'Demo user';
-    $results['address'] = 'Demo location, Sydney, Australia';
-    $results['email'] = 'ssn@yahoo.com';
-    $results['prefBillingNo'] = '1';
-    $results['prefBillingName'] = 'Credit Card';
-    $results['prefBay'] = 2;
-    $results['prefBayName'] = 'Sydney Uni Footbridge 1';
-    $results['nbookings'] = 17;
+	$db = connect();
+	
+	try {
+		// prepare a parameterized query
+		$stmt = $db->prepare("SELECT Member.memberNo, (nameGiven || ' ' || nameFamily) as name, (adrStreet) as address, Member.email,
+									prefBillingNo, (CASE WHEN prefBillingNo = 1 THEN (SELECT BankAccount.name FROM BankAccount WHERE BankAccount.memberNo = Member.memberNo)
+											WHEN prefBillingNo = 2 THEN (SELECT CreditCard.name FROM CreditCard WHERE CreditCard.memberNo = Member.memberNo)
+											WHEN prefBillingNo = 3 THEN (SELECT email FROM PayPal WHERE PayPal.memberNo = Member.memberNo) 
+											END) as prefbillingname,
+									prefBay, (site) as prefbayname,
+									stat_nrOfBookings as nbookings
+								
+								FROM Member LEFT OUTER JOIN ParkBay ON (prefBay = bayID)
+										
+								WHERE email = :user OR nickname = :user");
 
-    return $results;
+		$stmt->bindValue(':user', $user);
+		
+		// execute the query
+		$stmt->execute();
+		$results = $stmt->fetchAll();
+		
+		$stmt->closeCursor();
+	} catch (PDOException $e) {
+		print "Error finding user details: " - $e->getMessage();
+		die();
+	}
+  
+	return $results[0];
 }
 
 /**
- * Get list of bays with silimar address
+ * Get list of bays with similar address
  * @param string $address address to be look up
  * @return array Various details of each bay - see baylist.php
  */
 function searchBay($address) {
-    // STUDENT TODO:
-    // Change lines below with code to retrieve the Bays with similar address from the database
-$results = array(
-        array('bayID'=>954673, 'site'=> 'Sydney Uni Camp1', 'address'=> 'Search Add1', 'avail'=>true),
-        array('bayID'=>344578, 'site'=> 'Sydney Uni Camp2', 'address'=> 'Search Add2', 'avail'=>false)
-    );
+	$db = connect();
+	
+	try {
+		// prepare a parameterized query
+		$stmt = $db->prepare("SELECT bayID, site, address 
+								FROM ParkBay
+								WHERE address SIMILAR TO ('%' || :address || '%')");
+		$stmt->bindValue(':address', $address);
+		
+		// execute the query
+		$stmt->execute();
+		$results = $stmt->fetchAll();
+		
+		$stmt->closeCursor();	
+	} catch (PDOException $e) {
+		print "Error finding address details: " - $e->getMessage();
+		die();
+	}
+	
     return $results;
 }
 
@@ -93,20 +140,20 @@ $results = array(
   * @return array Various details of each bay - see baylist.php
  * @throws Exception
  */
-
 function getBays() {
-    // STUDENT TODO:
-    // Replace lines below with code to get list of bays from the database
-    // Example booking info - this should come from a query. Format is
-	// (bay ID, site, address, availability of the bay)
-    $results = array(
-        array('bayID'=>896541, 'site'=> 'Library', 'address'=> 'Glebe Point Road', 'avail'=>true),
-        array('bayID'=>954673, 'site'=> 'Sydney Uni','address'=> 'Camperdown', 'avail'=>true),
-		array('bayID'=>321567, 'site'=> 'UTS', 'address'=> 'Ultimo', 'avail'=>false)
-    );
+	$db = connect();
+	
+	// prepare a parameterized query
+	$stmt = $db->prepare("SELECT bayID, site, address 
+								FROM ParkBay");
+		
+	// execute the query
+	$stmt->execute();
+	$results = $stmt->fetchAll();
+	
+	$stmt->closeCursor();	
     return $results;
 }
-
 
 /**
  * Retrieve information on bays
@@ -114,19 +161,29 @@ function getBays() {
  * @return array  details of the member preferred bay - see baylist.php
  * @throws Exception
  */
-
 function getPrefBayInformation($memberNo) {
-    // STUDENT TODO:
-    // Replace lines below with code to get the information about the owner preferred bay from the database
-    // Example bay info - this should come from a query. Format is
-	// (bay ID, Owner, Latitude, Longitude, Address,  width, height, length, pod, site, week start, week end, weekend start, weekend end)
-
-    $results = array(
-        array('bayID'=>896541, 'address'=> 'Glebe Point Road', 'site'=> 'Library', 'avail'=>true)
-    );
-    return $results;
+	$db = connect();
+	
+	try {
+		// prepare a parameterized query
+		$stmt = $db->prepare("SELECT bayID, owner, gps_lat, gps_long, address , width, height, length, pod, site, avail_wk_start, avail_wk_end, avail_wend_start, avail_wend_end
+									FROM Member LEFT OUTER JOIN ParkBay ON (prefBay = bayID)
+									WHERE Member.nickname = :memberNo OR Member.email = :memberNo");
+		$stmt->bindValue(':memberNo', $memberNo);
+		
+		// execute the query
+		$stmt->execute();
+		$results = $stmt->fetchAll();
+		
+		$stmt->closeCursor();	
+		
+	} catch (PDOException $e) {
+		print "Error finding preferred bay details: " - $e->getMessage();
+		die();
+	}
+	
+	return $results;
 }
-
 
 /**
  * Retrieve information on bays
@@ -134,17 +191,28 @@ function getPrefBayInformation($memberNo) {
  * @return array Various details of the bay - see baydetail.php
  * @throws Exception
  */
-
 function getBayInformation($BayID) {
-    // STUDENT TODO:
-    // Replace lines below with code to get the information about a specific bay from the database
-    // Example bay info - this should come from a query. Format is
-	// (bay ID, Owner, Latitude, Longitude, Address,  width, height, length, pod, site, week start, week end, weekend start, weekend end)
-
-   return
-        array('bayID'=>954673,'site'=>'Glebe Public School 1', 'owner'=>'Toni Collette', 'address'=> '25 Glebe Point Road','description'=>'Bay located next to Glebe Public School','gps_lat'=>456,'gps_long'=>5689,'locatedAt'=>19,'mapURL'=>'https://www.google.com.au/maps/place/Glebe+Public+School/@-33.8896527,151.186376,16z/data=!4m6!1m3!3m2!1s0x6b12b1d4ab9ef1d9:0x1d017d69037a07c0!2sThe+University+of+Sydney!3m1!1s0x0000000000000000:0x365d99076bb74a6d',
-        'width'=> 45,'height'=>56,'length'=>56,'pod'=>45,'avail_wk_start'=>9,'avail_wk_end'=>17,'avail_wend_start'=>2,'avail_wend_end'=>3);
-
+	$db = connect();
+	
+	try {
+		// prepare a parameterized query
+		$stmt = $db->prepare("SELECT bayID, owner, gps_lat, gps_long, address , width, height, length, pod, site, avail_wk_start, avail_wk_end, avail_wend_start, avail_wend_end, located_at, description, mapURL
+									FROM ParkBay
+									WHERE bayID = :bayID");
+		$stmt->bindValue(':bayID', $BayID);
+		
+		// execute the query
+		$stmt->execute();
+		$results = $stmt->fetchAll();
+		
+		$stmt->closeCursor();
+	
+	} catch (PDOException $e) {
+		print "Error getting bay details: " - $e->getMessage();
+		die();
+	}
+	
+	return $results[0];
 
 }
 

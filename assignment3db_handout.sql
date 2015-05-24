@@ -73,7 +73,7 @@ CREATE TABLE PeerPark.Member (
   stat_nrOfReviews  INTEGER DEFAULT 0,             /* ADDED: nr of reviews per member  */
   stat_sumPayments  AmountInCents DEFAULT 0,       /* ADDED: total member payments     */
   plan          VARCHAR(20) NOT NULL,              /* ADDED: plan on which a member is */
-  prefBillingNo INTEGER     NOT NULL,  /* FK added later in script via ALTER TABLE */
+  prefBillingNo INTEGER,     /*NOT NULL,*/  /* FK added later in script via ALTER TABLE */
   prefBay       INTEGER,               /* FK added later in script via ALTER TABLE */
   CONSTRAINT Member_PK PRIMARY KEY (memberNo),
   CONSTRAINT Member_Membership_FK FOREIGN KEY (plan) REFERENCES MembershipPlan(title),
@@ -94,12 +94,148 @@ CREATE TABLE PeerPark.BillingAccount (
   CONSTRAINT BillingAccount_Member_FK FOREIGN KEY (memberNo) REFERENCES Member(memberNo) ON DELETE CASCADE,
   CONSTRAINT BillingAccount_CHK CHECK (billingNo between 1 and 3)
 );
-INSERT INTO MembershipPlan VALUES ('plan1', 0.05, 0.05);
-INSERT INTO Member VALUES (1, 'fake@hotmail.com', NULL, 'password', 'salt1', 'Mr', 'givenname', 'lastname', 22, 'A street', 'Sydney', NULL, 0, 0, 0, 'plan1', 1, 0);
-INSERT INTO BillingAccount VALUES (1, 1);
-INSERT INTO Member VALUES (2, 'new@hotmail.com', 'McFly', 'abc123', 'salt2', 'Mrs', 'givenname', 'lastname', 1, 'B street', 'Sydney', NULL, 0, 0, 0, 'plan1', 1, 0);
-INSERT INTO BillingAccount VALUES (2, 1);
+ALTER TABLE PeerPark.Member
+      ADD CONSTRAINT Member_BillingAccount_FK FOREIGN KEY (prefBillingNo, memberNo) REFERENCES BillingAccount(billingNo, memberNo) ON DELETE NO ACTION ON UPDATE CASCADE;
 
+CREATE TABLE PeerPark.BankAccount (
+  memberNo      INTEGER,
+  billingNo     INTEGER,
+  name          VARCHAR(30) NOT NULL,
+  accountNo     INTEGER     NOT NULL,
+  bsb           CHAR(6)     NOT NULL,
+  CONSTRAINT BankAccount_PK PRIMARY KEY (memberNo, billingNo),
+  CONSTRAINT BankAccount_BillingAccount_FK FOREIGN KEY (memberNo,billingNo) REFERENCES BillingAccount(memberNo,billingNo)  ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT BankAccount_BSB_CHK CHECK (bsb SIMILAR TO '[[:digit:]]{6}')
+);
+
+CREATE TABLE PeerPark.CreditCard (
+  memberNo      INTEGER,
+  billingNo     INTEGER,
+  name          VARCHAR(40) NOT NULL,
+  brand         VARCHAR(10) NOT NULL,
+  ccNo          CHAR(16)    NOT NULL,
+  expires       CHAR(5)     NOT NULL,
+  CONSTRAINT CreditCard_PK PRIMARY KEY (memberNo, billingNo),
+  CONSTRAINT CreditCard_BillingAccount_FK FOREIGN KEY (memberNo,billingNo) REFERENCES BillingAccount(memberNo,billingNo)  ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT CreditCard_Brand_CHK   CHECK (brand IN ('visa','master','amex')),
+  CONSTRAINT CreditCard_ccNo_CHK    CHECK (ccNo SIMILAR TO '[[:digit:]]{16}'),
+  CONSTRAINT CreditCard_Expires_CHK CHECK (expires SIMILAR TO '[[:digit:]][[:digit:]]/[[:digit:]][[:digit:]]')
+);
+
+CREATE TABLE PeerPark.PayPal (
+  memberNo      INTEGER,
+  billingNo     INTEGER,
+  email         EMailType NOT NULL,
+  CONSTRAINT PayPal_PK PRIMARY KEY (memberNo, billingNo),
+  CONSTRAINT PayPal_BillingAccount_FK FOREIGN KEY (memberNo,billingNo) REFERENCES BillingAccount(memberNo,billingNo)  ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+
+CREATE TABLE PeerPark.Driver (
+  memberNo      INTEGER,
+  licenceNo     INTEGER NOT NULL,
+  licenceExp    DATE    NOT NULL,
+  CONSTRAINT Driver_PK PRIMARY KEY (memberNo),
+  CONSTRAINT Driver_Member_FK FOREIGN KEY (memberNo) REFERENCES Member(memberNo)  ON DELETE CASCADE
+);
+/* Owner is defined as a View further down this SQL script */
+
+
+CREATE TABLE PeerPark.CarType (
+  make           VARCHAR(20),
+  model          VARCHAR(20), 
+  length         INTEGER,
+  width          INTEGER,
+  height         INTEGER,
+  CONSTRAINT CarType_PK PRIMARY KEY (make, model)
+ );
+
+CREATE TABLE PeerPark.ParkTag (
+  tagID          INTEGER,
+  issuedToMember INTEGER,
+  issuedToCar    VARCHAR(30),
+  CONSTRAINT ParkTag_PK PRIMARY KEY  (tagID)
+);
+
+CREATE TABLE PeerPark.Car (
+  memberNo       INTEGER,
+  name           VARCHAR(30),
+  regno          RegoType     UNIQUE,
+  make           VARCHAR(20)  NOT NULL,
+  model          VARCHAR(20)  NOT NULL,
+  currentTag     INTEGER      NOT NULL,
+  CONSTRAINT Car_PK PRIMARY KEY   (memberNo, name),
+  CONSTRAINT Car_Member_FK FOREIGN KEY (memberNo) REFERENCES Member(memberNo) ON DELETE CASCADE,
+  CONSTRAINT Car_CarType_FK FOREIGN KEY (make, model) REFERENCES CarType(make,model) ON DELETE NO ACTION ON UPDATE CASCADE,
+  CONSTRAINT Car_CurrentTag_FK FOREIGN KEY (currentTag) REFERENCES ParkTag(tagID) ON DELETE NO ACTION ON UPDATE CASCADE
+);
+
+ALTER TABLE PeerPark.ParkTag
+        ADD CONSTRAINT ParkTag_Car_FK FOREIGN KEY (issuedToMember,issuedToCar) REFERENCES Car(memberNo,name)  ON DELETE NO ACTION ON UPDATE CASCADE;
+
+CREATE TABLE PeerPark.ParkPod (
+  deviceID       INTEGER,
+  phone          VARCHAR(15),
+  CONSTRAINT     ParkPod_PK PRIMARY KEY (deviceID)
+);
+
+/* ADDED - location hierarchy */
+CREATE TABLE PeerPark.Location (
+  locID          INTEGER,
+  name           VARCHAR(100),
+  type           VARCHAR(10),
+  is_at          INTEGER  NULL,
+  CONSTRAINT   Location_PK      PRIMARY KEY (locID),
+  CONSTRAINT   Location_KEY     UNIQUE(name, is_at),
+  CONSTRAINT   Location_IsAt_FK FOREIGN KEY (is_at) REFERENCES Location(locID),
+  CONSTRAINT   Location_Type_CHK CHECK (type IN ('street','suburb','area','region','city','state','country'))
+);
+
+CREATE TABLE PeerPark.ParkBay (
+  bayID            SERIAL,
+  owner            INTEGER,
+  site             VARCHAR(50) NOT NULL UNIQUE,  /* NOTE: == name */
+  address          VARCHAR(200),
+  description      TEXT,             /* ADDED: some description text per bay */
+  gps_lat          FLOAT,
+  gps_long         FLOAT,
+  mapURL           VARCHAR(200),     /* ADDED: we have example data for Google-Maps URLs*/
+  located_at       INTEGER NOT NULL,
+  width            INTEGER,
+  height           INTEGER,
+  length           INTEGER,
+  pod              INTEGER,
+  avail_wk_start   SMALLINT,
+  avail_wk_end     SMALLINT,
+  avail_wend_start SMALLINT,
+  avail_wend_end   SMALLINT,
+
+  CONSTRAINT ParkBay_PK PRIMARY KEY (bayId),
+  CONSTRAINT ParkBay_Member_FK   FOREIGN KEY (owner) REFERENCES Member(memberNo),
+  CONSTRAINT ParkBay_ParkPod_FK  FOREIGN KEY (pod)   REFERENCES ParkPod(deviceID),
+  CONSTRAINT ParkBay_Location_FK FOREIGN KEY (located_at) REFERENCES Location(locID) ON DELETE RESTRICT ON UPDATE CASCADE
+);
+ALTER TABLE PeerPark.Member
+      ADD CONSTRAINT Member_ParkBay_FK FOREIGN KEY (prefBay) REFERENCES ParkBay(bayID) ON DELETE SET NULL;
+
+CREATE VIEW PeerPark.Owner AS
+       SELECT DISTINCT owner AS memberNo FROM PeerPark.ParkBay;
+
+
+CREATE TABLE PeerPark.Booking (
+  bookingID      SERIAL,
+  bayID          INTEGER     NOT NULL,
+  bookingDate    DATE        NOT NULL,
+  bookingHour    INTEGER     NOT NULL,
+  duration       INTEGER     NOT NULL,
+  memberNo       INTEGER     NOT NULL,
+  car            VARCHAR(30) NOT NULL,
+
+  CONSTRAINT Booking_PK   PRIMARY KEY (bookingID),
+  CONSTRAINT Booking_KEY  UNIQUE (bayId, bookingDate, bookingHour),
+  CONSTRAINT Booking_Bay_FK FOREIGN KEY (bayID) REFERENCES ParkBay(bayID) ON DELETE CASCADE,
+  CONSTRAINT Booking_Car_FK FOREIGN KEY (memberNo,car) REFERENCES Car(memberNo,name)
+);
 
 /*
  * example trigger:
@@ -130,16 +266,34 @@ CREATE TRIGGER BillingAccountDeleteTrigger
 /* it assumes that you have loaded our unidb schema from tutorial in week 6             */
 ALTER USER cpha3003 SET search_Path = '$user', public, unidb, PeerPark;
 
+/* TESTING QUERIES */
+INSERT INTO membershipplan VALUES ('Casual', 900, 825);
+INSERT INTO membershipplan VALUES ('Frequent', 2900, 525);
+
+INSERT INTO member VALUES (1, 'drfosterFoster@gmail.com', 'drfoster', 'puddledrfoster', '', 'Dr', 'Jacob', 'Foster', 23, 'Punchs Creek Road,MOUNT TULLY QLD 4380', 'Sydney', NULL, 3, 0, 0, 'Casual', NULL, NULL);
+INSERT INTO member VALUES (2, 'mrrelativEinstein@gmail.com', 'mrrelativ', 'quantummrrelativ', '', 'Prof', 'Albert', 'Einstein', 56, 'Wynyard Street,KILLIMICAT NSW 2720', 'Sydney', null, 0, 0, 0, 'Casual', NULL, NULL);
+
+INSERT INTO billingaccount VALUES (1, 1);
+INSERT INTO billingaccount VALUES (2, 1);
+/*
+SELECT memberNo, nameGiven || ' ' || nameFamily, to_char(adrStreetNo, '999') || ' ' || adrStreet || ' ' || adrCity, email, prefBillingNo, 
+CASE WHEN prefBillingNo = 1 THEN bankAccount.name WHEN prefBillingNo = 2 THEN CreditCard.name WHEN prefBillingNo = 3 THEN PayPal.name END,
+prefBay, ParkBay.site, stat_nrOfBookings 
+FROM member LEFT OUTER JOIN BillingAccount USING (memberNo);
+*/
+SELECT memberNo, (nameGiven || ' ' || nameFamily) as name, adrStreetNo || ' ' || adrStreet || ' ' || adrCity as address, email
+								FROM Member
+								WHERE email = 'drfosterFoster@gmail.com' OR nickname = 'drfosterFoster@gmail.com'
 
 
-/* TESTING ENV */
 
 
 
 
 
 
-SELECT email, nickname, password FROM Member WHERE email = 'new@hotmail.com' OR nickname = 'McFly' AND password = 'abc123';
+
+
 
 /*
  * Some optional, more complex semantic integrity constraints as Assertions

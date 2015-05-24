@@ -15,7 +15,7 @@ try {
 	  {
 	   $bays = searchBay($_REQUEST['bayAddress']);
 	  }
-	if(isset($_REQUEST['all'])){
+	else if(isset($_REQUEST['all'])){
 	    $bays = getBays();
 	  }
 
@@ -41,7 +41,7 @@ try {
 		echo '</thead>';
 		echo '<tbody>';
 		foreach($bays as $bay) {
-			echo '<tr><td><a href="baydetail.php?bayID=',$bay['bayID'],'">',$bay['bayID'],'</td><td>',$bay['site'], '</td><td>',$bay['address'], '</td><td><a href="newbooking.php?bayID=',$bay['bayID'],'">',$bay['avail']==true ? 'yes' : 'no', '</td></tr>';
+			echo '<tr><td><a href="baydetail.php?bayID=',$bay['bayid'],'">',$bay['bayid'],'</td><td>',$bay['site'], '</td><td>',$bay['address'], '</td><td><a href="newbooking.php?bayID=',$bay['bayID'],'">',$bay['avail']==true ? 'yes' : 'no', '</td></tr>';
 		}
 		echo '</tbody>';
 		echo '</table>';
