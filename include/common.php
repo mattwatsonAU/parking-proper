@@ -47,6 +47,7 @@ function htmlHead() {
         <li><a href="baylist.php">Home Bay</a></li>
         <li><a href="bookings.php">Current Bookings</a></li>
         <li><a href="newbooking.php">New Booking</a></li>
+        <li><a href="invoices.php">Invoices</a></li>
         <li><a href="login.php">Logout</a></li>
     </ul>
     <div id="content">

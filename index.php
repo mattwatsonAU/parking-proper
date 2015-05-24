@@ -13,6 +13,7 @@ try {
 
     //$details = getUserDetails(1);
     $details = getUserDetails($_SESSION['memberNo']);
+
     //$details = getUserDetails(1);
     //print_r($details[0][0]);
     echo '<h2>memberNo</h2> ',$details[0]['memberno'];
@@ -20,7 +21,7 @@ try {
     
     echo '<h2>eMail</h2> ',$details[0]['email'];
     echo '<h2>Address</h2> ',$details[0]['adrstreetno'], ' ', $details[0]['adrstreet'], ' ', $details[0]['adrcity'];
-    echo '<h2>Number of Bookings</h2> ',$details[0]['stat_nrofbookings'];
+   
 
 
     //echo '<h2>Preferred Bay</h2>',$details[0]['prefbay'];

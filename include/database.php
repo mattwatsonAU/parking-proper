@@ -579,4 +579,47 @@ function getNoBookings($memberNo) {
     return $results;
 
 }
+
+/** Generates variables for the invoice */
+function getInvoice($SESSION['memberNo']){
+
+
+    $db = connect();
+    try {
+        //SELECT * FROM Booking WHERE (cast( bookingDate as varchar ) SIMILAR TO '%-02-%')
+
+
+        //Auto generate the previous months ('%-04-15')
+
+        //The user can click a button to generate a specific month and year
+
+        // $stmt = $db->prepare('SELECT COUNT(bookingID)
+        //                         FROM Booking
+        //                         WHERE memberNo=:memberNo');
+
+        $stmt->bindValue(':memberNo', $memberNo, PDO::PARAM_INT);
+         
+
+        $stmt->execute();
+
+        $results = $stmt->fetchColumn();
+
+        //print_r($results);
+        $stmt->closeCursor();
+    } catch (PDOException $e) { 
+        print "Error generating invoice"; 
+        return;
+    }
+    //print_r($results);
+    return $results;
+
+}
+
+
+
+}
+
+
+
+
 ?>
