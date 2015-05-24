@@ -122,9 +122,15 @@ function getUserDetails($user) {
         print "Error listing units: " . $e->getMessage(); 
         die();
     }
+
+  
+
+
+
     //print_r($results);
     return $results;
 }
+
 
 /**
  * Get list of bays with silimar address
@@ -174,11 +180,53 @@ function getPrefBayInformation($memberNo) {
     // Example bay info - this should come from a query. Format is
 	// (bay ID, Owner, Latitude, Longitude, Address,  width, height, length, pod, site, week start, week end, weekend start, weekend end)
 
-    $results = array(
-        array('bayID'=>896541, 'address'=> 'Glebe Point Road', 'site'=> 'Library', 'avail'=>true)
-    );
+//First SELECT the preffered Bay for the matching number, this is better than using a nested loop as the nested loop will loop the query many times. 
+$db = connect();
+    try {
+        $stmt = $db->prepare('SELECT prefBay FROM Member WHERE memberNo=:memberNo');
+
+        $stmt->bindValue(':memberNo', $memberNo);
+         
+        $stmt->execute();
+
+        $prefBay = $stmt->fetchColumn();
+        
+        $stmt->closeCursor();
+    } catch (PDOException $e) { 
+        print "Member has no prefered bay"; 
+        return;
+    }
+
+//Select the details of the memebers preffered bay
+ $db = connect();
+    try {
+         $stmt = $db->prepare('SELECT bayID, address, site
+                                FROM ParkBay
+                                WHERE bayID=:prefBay');
+
+        $stmt->bindValue(':prefBay', $prefBay);
+         
+
+        $stmt->execute();
+
+        $results = $stmt->fetchAll();
+        
+        $stmt->closeCursor();
+    } catch (PDOException $e) { 
+        print "Error fetching preffered bay details"; 
+        return;
+    }
+    //print_r($results);
     return $results;
 }
+
+
+
+//     // $results = array(
+//     //     array('bayID'=>896541, 'address'=> 'Glebe Point Road', 'site'=> 'Library', 'avail'=>true)
+//     // );
+//     return $results;
+// }
 
 
 /**
@@ -209,10 +257,6 @@ function getBayInformation($BayID) {
  */
 
 function getOpenBookings($memberNo) {
-    // STUDENT TODO:
-    // Replace lines below with code to get list of bookings from the database
-    // Example booking info - this should come from a query. Format is
-    // (booking ID,  bay ID, Car Name, Booking start date, booking start time, booking duration)
 
 	$db = connect();
 
@@ -232,13 +276,6 @@ function getOpenBookings($memberNo) {
         return;
     }
     
-
-
-
-    // $results = array(
-    //     array('bookingID'=>1,'bayLocation'=>'CBD','car'=>'Jenny the Yaris','bookingDate'=>'05/03/15' ),
-    //     array('bookingID'=>2,'bayLocation'=>'Glebe','car'=>'Garry the Getz','bookingDate'=>'11/04/15')
-    // );
     return $results;
 }
 
@@ -422,6 +459,39 @@ function getBookingInfo($bookingID) {
     // Replace lines below with code to get the detail about the booking.
     // Example booking info - this should come from a query. Format is
 	// (bookingID, bay Location, booking Date, booking Hour, duration, car, member Name)
+
+
+
+
+		$db = connect();
+
+	try{
+		
+		//$stmt = $db->prepare('SELECT bookingID, address, car, nameGiven, bookingDate, bookingHour, duration FROM Booking NATURAL JOIN ParkBay NATURAL JOIN Member WHERE bookingID=:bookingNo');
+		$stmt = $db->prepare('SELECT bookingID, car FROM Booking WHERE bookingID=:bookingNo');
+		$stmt->bindValue(':bookingID', $bookingID);
+
+		$stmt->execute();
+
+		$results = $stmt->fetchAll();
+
+		$stmt->closeCursor();
+	}catch (PDOException $e) { 
+        print "Error Fecthing Current Bookings." ; 
+        return;
+    }
+
+    print_r($results[0]);
+    
+    return $results;
+
+
+
+
+
+
+
+
         return array('bookingID'=>1, 'bayLocation'=>'CBD', 'bookingDate'=> '10/05/2015','bookingHour'=>'10:01','duration'=>2,'car'=> 'Harry the Goat','memberName'=>'Uwe');
 }
 
@@ -474,11 +544,11 @@ function getNoBookings($memberNo) {
         $stmt->execute();
         $results = $stmt->fetchColumn();
 
-        print_r($results);
+        //print_r($results);
         $stmt->closeCursor();
     } catch (PDOException $e) { 
-        print "Error listing units: " . $e->getMessage(); 
-        die();
+        print "Error getting number of bookings"; 
+        return;
     }
     //print_r($results);
     return $results;

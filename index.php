@@ -23,9 +23,17 @@ try {
     echo '<h2>Number of Bookings</h2> ',$details[0]['stat_nrofbookings'];
 
 
-    echo '<h2>Preferred Bay</h2>',$details[0]['prefbay'];
+    //echo '<h2>Preferred Bay</h2>',$details[0]['prefbay'];
+    echo '<h2>Preferred Bay</h2>';
+    echo '<tr><td><a href="baydetail.php?bayID=',$details[0]['prefbay'],'">',$details[0]['prefbay'],'</td></tr>';
     //echo '<h2>Preferred Bay</h2>',$details[0]['prefbay'],' - ',$details[0]['prefbayname'];
-    echo '<h2>Preferred Billing </h2>',$details['prefBillingNo'],' - ',$details['prefBillingName'];
+
+
+
+
+    //SELECT prefBillingNo FROM Member WHERE memberNo=:memberNo
+
+    //echo '<h2>Preferred Billing </h2>',$moreDetails[0],' - ',$moreDetails[1];
 
 
     //echo '<h2>Total bookings</h2> ',$details['nbookings'];
@@ -37,7 +45,7 @@ try {
 
    $numBookings = getNoBookings($_SESSION['memberNo']);
     //echo '<h2>Total bookings</h2> ',$numBookings['nbookings'];
-   echo '<h2>Total bookings</h2> ',$numBookings[0];
+   echo '<h2>Total bookings</h2> ',$numBookings;
 
 } catch (Exception $e) {
     echo 'Cannot get bays status';
