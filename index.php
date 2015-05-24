@@ -25,9 +25,53 @@ try {
 
     //echo '<h2>Preferred Bay</h2>',$details[0]['prefbay'];
     echo '<h2>Preferred Bay</h2>';
+
+    //If the user has no preffered bay then display a link to add a preffered bay
+    if($details[0]['prefbay'] == ''){
+        printf("No preferred bay.\n");
+        printf("\n");
+        printf("Add a preferred bay below\n");
+
+
+//!!!!!!!!!!!
+        $submit =!empty($_REQUEST['bayID']);
+        
+        if ($submit) {
+        try {
+
+        //$booking = makeBooking($_SESSION['memberNo'], $_REQUEST['bayID']);
+        $prefBay = addPrefBay($_SESSION['memberNo'], $_REQUEST['bayID']);
+
+        if($prefBay == 'success') { 
+            echo '<h2>Congratulations, you\'ve added a preferred bay!';
+
+             //Refresh the page if a preffered bay was successfully added
+            header("Refresh:0");
+        } else {
+            echo 'Sorry, that bay ID doesn\'t exist';
+        }
+      
+    } catch (Exception $e) {
+            echo 'Please try again.';
+    }
+    } else {
+        echo 'Please enter a new bay ID.';
+    }
+
+
+
+    ?>
+        <form action="index.php" id="index" method="post">
+            <label>Bay ID <input type="number" name="bayID" value="<?php echo $bayID;?>"/></label><br />
+            <br /><input type=submit value="Add Preferred Bay"/>
+        </form>
+    <?php
+
+    }else{
     echo '<table>';
     echo '<tr><td><a href="baydetail.php?bayID=',$details[0]['prefbay'],'">',$details[0]['prefbay'],'</td></tr>';
     echo '</table>';
+    }
     //echo '<h2>Preferred Bay</h2>',$details[0]['prefbay'],' - ',$details[0]['prefbayname'];
 
 

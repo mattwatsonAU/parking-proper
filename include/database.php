@@ -71,6 +71,35 @@ function checkLogin($name,$pass) {
     }
 }
 
+
+/**
+ * Meme=ber can add a preferred bay, if they do not already have one.
+ * @param memberNo, bayID
+ * @return success (as true) or otherwise (as false)
+ */
+function addPrefBay($memberNo, $bayID){
+
+	$db = connect();
+    try {
+
+         $stmt = $db->prepare('UPDATE Member SET prefBay=:prefBay WHERE memberNo=:memberNo');
+
+        $stmt->bindValue(':memberNo', $memberNo, PDO::PARAM_INT);
+        $stmt->bindValue(':prefBay', $bayID, PDO::PARAM_INT);
+         
+
+        $stmt->execute();
+        $result = 'success';
+        
+        $stmt->closeCursor();
+    } catch (PDOException $e) { 
+        //print "Unsuccessful"; 
+        return;
+    }
+    return $result;
+}
+
+
 /**
  * Get details of the current user
  * @param string $user login name user
