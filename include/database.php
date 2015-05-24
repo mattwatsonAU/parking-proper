@@ -272,7 +272,7 @@ function getOpenBookings($memberNo) {
 
 		$stmt->closeCursor();
 	}catch (PDOException $e) { 
-        print "Error Fecthing Current Bookings." ; 
+        print "Error Fetching Current Bookings." ; 
         return;
     }
     
@@ -315,8 +315,8 @@ try {
 
 
     }catch (PDOException $e) { 
-        print "Error Fecthing Car Dimensions: " . $e->getMessage(); 
-        die();
+        print "Error Fecthing Car Dimensions: "; 
+        return;
     }
 
 //Get the bay dimensions
@@ -334,8 +334,8 @@ try {
 
 
     }catch (PDOException $e) { 
-        print "Error Fecthing Car Dimensions: " . $e->getMessage(); 
-        die();
+        print "Error Fecthing Car Dimensions: "; 
+        return;
     }
 
 //Compare the car and bay dimensions
@@ -459,16 +459,12 @@ function getBookingInfo($bookingID) {
     // Replace lines below with code to get the detail about the booking.
     // Example booking info - this should come from a query. Format is
 	// (bookingID, bay Location, booking Date, booking Hour, duration, car, member Name)
-
-
-
-
 		$db = connect();
 
 	try{
 		
 		//$stmt = $db->prepare('SELECT bookingID, address, car, nameGiven, bookingDate, bookingHour, duration FROM Booking NATURAL JOIN ParkBay NATURAL JOIN Member WHERE bookingID=:bookingNo');
-		$stmt = $db->prepare('SELECT bookingID, car FROM Booking WHERE bookingID=:bookingNo');
+		$stmt = $db->prepare('SELECT bookingID, car, nameGiven, bookingDate, bookingHour, duration, site, address FROM Booking NATURAL JOIN Member Natural JOIN ParkBay WHERE bookingID=:bookingID');
 		$stmt->bindValue(':bookingID', $bookingID);
 
 		$stmt->execute();
@@ -481,7 +477,7 @@ function getBookingInfo($bookingID) {
         return;
     }
 
-    print_r($results[0]);
+    //print_r($results);
     
     return $results;
 
@@ -492,7 +488,7 @@ function getBookingInfo($bookingID) {
 
 
 
-        return array('bookingID'=>1, 'bayLocation'=>'CBD', 'bookingDate'=> '10/05/2015','bookingHour'=>'10:01','duration'=>2,'car'=> 'Harry the Goat','memberName'=>'Uwe');
+        //return array('bookingID'=>1, 'bayLocation'=>'CBD', 'bookingDate'=> '10/05/2015','bookingHour'=>'10:01','duration'=>2,'car'=> 'Harry the Goat','memberName'=>'Uwe');
 }
 
 /**

@@ -25,7 +25,9 @@ try {
 
     //echo '<h2>Preferred Bay</h2>',$details[0]['prefbay'];
     echo '<h2>Preferred Bay</h2>';
+    echo '<table>';
     echo '<tr><td><a href="baydetail.php?bayID=',$details[0]['prefbay'],'">',$details[0]['prefbay'],'</td></tr>';
+    echo '</table>';
     //echo '<h2>Preferred Bay</h2>',$details[0]['prefbay'],' - ',$details[0]['prefbayname'];
 
 
