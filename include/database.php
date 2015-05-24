@@ -213,10 +213,32 @@ function getOpenBookings($memberNo) {
     // Replace lines below with code to get list of bookings from the database
     // Example booking info - this should come from a query. Format is
     // (booking ID,  bay ID, Car Name, Booking start date, booking start time, booking duration)
-    $results = array(
-        array('bookingID'=>1,'bayLocation'=>'CBD','car'=>'Jenny the Yaris','bookingDate'=>'05/03/15' ),
-        array('bookingID'=>2,'bayLocation'=>'Glebe','car'=>'Garry the Getz','bookingDate'=>'11/04/15')
-    );
+
+	$db = connect();
+
+	try{
+		// $stmt = $db->prepare('SELECT car, bookingID,  bookingDate FROM Booking WHERE memberNo=:memberNo');
+		$stmt = $db->prepare('SELECT car, bookingID, bookingDate, address FROM Booking NATURAL JOIN ParkBay WHERE memberNo=:memberNo');
+//bayLocation,
+		$stmt->bindValue(':memberNo', $memberNo);
+
+		$stmt->execute();
+
+		$results = $stmt->fetchAll();
+
+		$stmt->closeCursor();
+	}catch (PDOException $e) { 
+        print "Error Fecthing Current Bookings." ; 
+        return;
+    }
+    
+
+
+
+    // $results = array(
+    //     array('bookingID'=>1,'bayLocation'=>'CBD','car'=>'Jenny the Yaris','bookingDate'=>'05/03/15' ),
+    //     array('bookingID'=>2,'bayLocation'=>'Glebe','car'=>'Garry the Getz','bookingDate'=>'11/04/15')
+    // );
     return $results;
 }
 
