@@ -42,10 +42,7 @@ function connect($file = 'config.ini') {
  * @return boolean True is login details are correct
  */
 function checkLogin($name,$pass) {
-    
-    if($name=='testuser'){
-        return ($name=='testuser' && $pass=='testpass');
-    }else if($pass==''){
+    if($pass==''){
         return false;
     }else{
 
@@ -106,25 +103,7 @@ function addPrefBay($memberNo, $bayID){
  * @return array Details of user - see index.php
  */
 function getUserDetails($user) {
-    // STUDENT TODO:
-    // Replace lines below with code to validate details from the database
-    // if ($user != 'testuser') throw new Exception('Unknown user');
-    // $results = array();
-    // // Example user data - this should come from a query
-    // $results['memberNo'] = 1111;
-    // $results['name'] = 'Demo user';
-    // $results['address'] = 'Demo location, Sydney, Australia';
-    // $results['email'] = 'ssn@yahoo.com';
-    // $results['prefBillingNo'] = '1';
-    // $results['prefBillingName'] = 'Credit Card';
-    // $results['prefBay'] = 2;
-    // $results['prefBayName'] = 'Sydney Uni Footbridge 1';
-    // $results['nbookings'] = 17;
-
-    // return $results;
-
-
-
+  
     $db = connect();
     try {
         
@@ -136,9 +115,14 @@ function getUserDetails($user) {
         // $stmt->bindValue(':name', $user);
 
          $stmt = $db->prepare('SELECT nameTitle, nameGiven, nameFamily, memberNo, email, adrStreetNo, 
-                                adrStreet, adrCity, prefBay, stat_nrOfBookings
-                                FROM Member
+                                adrStreet, adrCity, prefBay, stat_nrOfBookings, prefBillingNo
+                                FROM Member NATURAL JOIN ParkBay
                                 WHERE memberNo=:memberNo');
+
+
+
+
+//[0]['prefbillingNo'], ' ', $details[0]['prefbillingname'];
 
         $stmt->bindValue(':memberNo', $user, PDO::PARAM_INT);
          
@@ -149,7 +133,7 @@ function getUserDetails($user) {
         $stmt->closeCursor();
     } catch (PDOException $e) { 
         print "Error listing units: " . $e->getMessage(); 
-        die();
+        return;
     }
 
   
@@ -581,7 +565,7 @@ function getNoBookings($memberNo) {
 }
 
 /** Generates variables for the invoice */
-function getInvoice($SESSION['memberNo']){
+function getPlanDetails($memberNo){
 
 
     $db = connect();
@@ -591,35 +575,182 @@ function getInvoice($SESSION['memberNo']){
 
         //Auto generate the previous months ('%-04-15')
 
+
+        //Get the memebers plan
+
+
+
+        //Get the hourly_rate of the plan AND the monthly fee
+
+
+        $stmt = $db->prepare('SELECT hourly_rate, monthly_fee 
+                                FROM MembershipPlan JOIN Member ON plan=title 
+                                
+                                WHERE memberNo=:memberNo');
+        //WHERE memberNo=1');
+
+        $stmt->bindValue(':memberNo', $memberNo, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $planDetails = $stmt->fetchAll();
+        $stmt->closeCursor(); 
+
+        //print($planDetails[0]['hourly_rate']);
+
+        //SELECT bookingID, duration FROM Booking WHERE (cast( bookingDate as varchar ) SIMILAR TO '2015-04-%' AND memberNo=:memberNo)
+
+        //WE WANT!!!
+        //Sum all the durations up for the bookings and multiply by the members rate plan for total cost for that month
+        //Number of bookings for that month
+
+
+        //!!!!!!!!!!!
+        //List all booking IDs for that month and their associated cost and duration
+        //Then list the monthly fee
+        //Then total number of bookings and total cost (duration * hourly_rate + monthly fee)
+        //!!!!!!!!!!!
+
+
+
+
         //The user can click a button to generate a specific month and year
 
         // $stmt = $db->prepare('SELECT COUNT(bookingID)
         //                         FROM Booking
         //                         WHERE memberNo=:memberNo');
 
-        $stmt->bindValue(':memberNo', $memberNo, PDO::PARAM_INT);
+        //$stmt->bindValue(':memberNo', $memberNo, PDO::PARAM_INT);
          
+
+        // $stmt->execute();
+
+        // $results = $stmt->fetchAll();
+
+        //print_r($planDetails[0]);
+        //$stmt->closeCursor();
+    } catch (PDOException $e) { 
+        print "Error fetching memeber rate plan"; 
+        return;
+    }
+    //print_r($results);
+
+    // $monthly_fee = $planDetails[0]['monthly_fee'];
+    // $hourly_fee = $planDetails[0]['hourly_fee'];
+    return $planDetails[0];
+
+}
+    //return $planDetails[0];
+
+function getInvoice($memberNo){
+
+
+    $db = connect();
+
+ try {
+        //SELECT * FROM Booking WHERE (cast( bookingDate as varchar ) SIMILAR TO '%-02-%')
+
+
+        //Auto generate the previous months ('%-04-15')
+
+
+        //Get the memebers plan
+
+
+
+        //Get the hourly_rate of the plan AND the monthly fee
+
+
+        // $stmt = $db->prepare('SELECT *
+        //                         FROM Booking 
+        //                         WHERE memberNo=:memberNo AND (cast( bookingDate as varchar ) SIMILAR TO '2007-04-%')');
+
+
+
+
+
+ 	  	// $stmt = $db->prepare("SELECT bookingID, duration
+     //                            FROM Booking 
+     //                            WHERE memberNo=1 AND (cast( bookingDate as varchar ) SIMILAR TO ('2007-04-%')");
+
+ 	  	$stmt = $db->prepare("SELECT bookingID, duration
+                                FROM Booking 
+                                WHERE date_part('month', bookingDate)=date_part('month', CURRENT_DATE) 
+                                AND date_part('year', bookingDate)=date_part('year', CURRENT_DATE) 
+                                AND memberNo=:memberNo");
+ 	  	//WHERE date_part('month', bookingDate)=:month AND date_part('year', bookingDate)=:year");
+
+
+//Set month and year equal to current date month -1 then current year
+ 	  	//$stmt->bindValue(':month', $month);
+ 	  	//$stmt->bindValue(':year', $year);
+// $stmt = $db->prepare("SELECT bookingID, duration, bookingDate
+
+//    FROM Booking
+//   WHERE (bookingDate, bookingDate) OVERLAPS ( '2007-01-01'::Date, '2008-04-12'::Date)");
+
+
+
+        $stmt->bindValue(':memberNo', $memberNo, PDO::PARAM_INT);
+
+
 
         $stmt->execute();
 
-        $results = $stmt->fetchColumn();
+        $results = $stmt->fetchAll();
+        $stmt->closeCursor(); 
 
-        //print_r($results);
-        $stmt->closeCursor();
-    } catch (PDOException $e) { 
+        }catch (PDOException $e) { 
         print "Error generating invoice"; 
         return;
     }
     //print_r($results);
+
     return $results;
+// /** Generates variables for an old invoice */
+// function getOldInvoice($SESSION['memberNo'], $month, $year){
+
+
+//     $db = connect();
+//     try {
+//         //SELECT * FROM Booking WHERE (cast( bookingDate as varchar ) SIMILAR TO '%-02-%')
+
+
+//         //Auto generate the previous months ('%-04-15')
+//         //SELECT * FROM Booking NATURAL JOIN Member WHERE (cast( bookingDate as varchar ) SIMILAR TO '%:month-:year' AND memberNo=:memberNo)
+//         //Sum all the durations up for the bookings and multiply by the members rate plan 
+
+
+//         //$stmt->bindValue(':month', $month);
+//         //$stmt->bindValue(':year', $year);
+
+
+//         //The user can click a button to generate a specific month and year
+
+//         // $stmt = $db->prepare('SELECT COUNT(bookingID)
+//         //                         FROM Booking
+//         //                         WHERE memberNo=:memberNo');
+
+//         $stmt->bindValue(':memberNo', $memberNo, PDO::PARAM_INT);
+         
+
+//         $stmt->execute();
+
+//         $results = $stmt->fetchColumn();
+
+//         //print_r($results);
+//         $stmt->closeCursor();
+//     } catch (PDOException $e) { 
+//         print "Error generating invoice"; 
+//         return;
+//     }
+//     //print_r($results);
+//     return $results;
+
+// }
+
+// }
 
 }
-
-
-
-}
-
-
 
 
 ?>

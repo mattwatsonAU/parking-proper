@@ -22,9 +22,21 @@ try {
     echo '<h2>eMail</h2> ',$details[0]['email'];
     echo '<h2>Address</h2> ',$details[0]['adrstreetno'], ' ', $details[0]['adrstreet'], ' ', $details[0]['adrcity'];
    
+   // if($details[0]['prefbillingno'] == 1){
+   //  $prefBillingName = 'Credit Card'
+   // }else if($details[0]['prefbillingno'] == 2){
+
+   // }else {
+
+   // }
 
 
-    //echo '<h2>Preferred Bay</h2>',$details[0]['prefbay'];
+
+    echo '<h2>Preferred Billing</h2>',$details[0]['prefbillingno'], ' ', $prefBillingName;
+
+
+
+
     echo '<h2>Preferred Bay</h2>';
 
     //If the user has no preffered bay then display a link to add a preffered bay

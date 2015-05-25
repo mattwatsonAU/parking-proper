@@ -47,16 +47,18 @@ if (!$submit || $booking==null || $booking['status'] != 'success') {
 	// Supply defaults for any unset values	
 	$carname = isset($_REQUEST['carname']) ? $_REQUEST['carname'] : 'Sample Car';
 	$parkdate = isset($_REQUEST['parkdate']) ? $_REQUEST['parkdate'] : date("Y-m-d");
-	$parktime = isset($_REQUEST['parktime']) ? $_REQUEST['parktime'] :  date("H:00:00");
+	$parktime = isset($_REQUEST['parktime']) ? $_REQUEST['parktime'] :  date("H");
 	$duration = isset($_REQUEST['duration']) ? $_REQUEST['duration'] : 1;	
-	$bayID = isset($_REQUEST['bayID']) ? $_REQUEST['bayID'] : 0;
+	//Default for bayID is the members preffered bay
+	$defaultBayID = getPrefBayInformation($_SESSION['memberNo']);
+	$bayID = isset($_REQUEST['bayID']) ? $_REQUEST['bayID'] : $defaultBayID[0]['bayid'];
 
 ?>
     <form action="newbooking.php" id="newbooking" method="post">
 	    <label>Bay ID <input type="number" name="bayID" value="<?php echo $bayID;?>"/></label><br />
         <label>Car <input type="text" name="carname" value="<?php echo $carname;?>"/></label><br />
 		<label> date <input type="date" name="parkdate"  value="<?php echo $parkdate;?>"/></label><br />
-		<label>time <input type="time" step="3600" name="parktime" min="00:00:00" value="<?php echo $parktime;?>"/></label><br />
+		<label>time <input type="time" step="3600" name="parktime" min="00" value="<?php echo $parktime;?>"/></label><br />
 		<label>Duration (hours) <input type="number" name="duration" step="1"  min="1" value="<?php echo $duration;?>"/></label><br />
 		<br /><input type=submit value="Request Booking"/>
     </form>
