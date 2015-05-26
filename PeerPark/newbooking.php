@@ -23,15 +23,15 @@ echo 'Submitting booking.';
         $booking = makeBooking($_SESSION['memberNo'], $_REQUEST['carname'], $_REQUEST['bayID'], $_REQUEST['parkdate'], $_REQUEST['parktime'], $_REQUEST['duration']);
         if($booking['status'] == 'success') { 
             echo '<h2>Congratulations, you\'ve made a new new booking!';
-			echo '<h2>Booking ID</h2> ',$booking['bookingID'];
+			echo '<h2>Booking ID</h2> ',$booking['bookingid'];
 			echo '<h2>Car</h2> ',$booking['car'];
-			echo '<h2>Bay ID</h2> ',$booking['bayID'];
-			echo '<h2>Date</h2> ',$booking['bookingDate'];
-			echo '<h2>Hour</h2> ',$booking['bookingHour'];
+			echo '<h2>Bay ID</h2> ',$booking['bayid'];
+			echo '<h2>Date</h2> ',$booking['bookingdate'];
+			echo '<h2>Hour</h2> ',$booking['bookinghour'];
 			echo '<h2>Duration</h2> ',$booking['duration'];
 			echo '<h2>Booking Cost</h2> ',$booking['cost'];
         } else {
-            echo '<h2>Sorry, couldn\t make a booking:</h2>', $booking['status'];
+            echo '<h2>Sorry, couldn\'t make a booking:</h2>', $booking['status'];
         }
     } catch (Exception $e) {
             echo 'Couldn\'t submit booking. Please try again.';
@@ -44,16 +44,19 @@ if (!$submit || $booking==null || $booking['status'] != 'success') {
 	// Supply defaults for any unset values	
 	$carname = isset($_REQUEST['carname']) ? $_REQUEST['carname'] : 'Sample Car';
 	$parkdate = isset($_REQUEST['parkdate']) ? $_REQUEST['parkdate'] : date("Y-m-d");
-	$parktime = isset($_REQUEST['parktime']) ? $_REQUEST['parktime'] :  date("H:00:00");
+	$parktime = isset($_REQUEST['parktime']) ? $_REQUEST['parktime'] :  date("H");
 	$duration = isset($_REQUEST['duration']) ? $_REQUEST['duration'] : 1;	
-	$bayID = isset($_REQUEST['bayID']) ? $_REQUEST['bayID'] : 0;
+//	$bayID = isset($_REQUEST['bayID']) ? $_REQUEST['bayID'] : 0;
+
+	$defaultBayID = getPrefBayInformation($_SESSION['memberNo']);
+	$bayID = isset($_REQUEST['bayID']) ? $_REQUEST['bayID'] : $defaultBayID[0]['bayid'];
 
 ?>
     <form action="newbooking.php" id="newbooking" method="post">
 	    <label>Bay ID <input type="number" name="bayID" value="<?php echo $bayID;?>"/></label><br />
         <label>Car <input type="text" name="carname" value="<?php echo $carname;?>"/></label><br />
-		<label> date <input type="date" name="parkdate"  value="<?php echo $parkdate;?>"/></label><br />
-		<label>time <input type="time" step="3600" name="parktime" min="00:00:00" value="<?php echo $parktime;?>"/></label><br />
+		<label> date <input type="date" name="parkdate" value="<?php echo $parkdate;?>"/></label><br />
+		<label>time <input type="time" step="3600" name="parktime" min="00" value="<?php echo $parktime;?>"/></label><br />
 		<label>Duration (hours) <input type="number" name="duration" step="1"  min="1" value="<?php echo $duration;?>"/></label><br />
 		<br /><input type=submit value="Request Booking"/>
     </form>

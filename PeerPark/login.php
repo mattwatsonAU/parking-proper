@@ -25,7 +25,26 @@ function log_in($name, $pass) {
     $is_valid = checkLogin($name,$pass);
     if ($is_valid) {
         $_SESSION['logged_in'] = true;
-        $_SESSION['memberNo'] = $name;
+        
+		// log memberID into session array
+		$db = connect();
+        try {
+		// prepare the parameterized query
+        $stmt = $db->prepare('SELECT memberNo
+                                FROM Member
+                                WHERE email=:name OR nickName=:name');
+        $stmt->bindValue(':name', $name);
+         
+		 // execute query
+        $stmt->execute();
+        $results = $stmt->fetchColumn();
+        
+        $stmt->closeCursor();
+		} catch (PDOException $e) { 
+			print "Error getting member number: " . $e->getMessage(); 
+			die();
+		}
+		$_SESSION['memberNo'] = $results;
     }
     return $is_valid;
 }

@@ -13,12 +13,12 @@ try {
     $bookings = getOpenBookings($_SESSION['memberNo']);
     echo '<table>';
     echo '<thead>';
-    echo '<tr><th>Bay Location</th><th>Car</th><th>Date</th></tr>';
+	echo '<tr><th>Bay Location</th><th>Car</th><th>Date</th></tr>';
     echo '</thead>';
     echo '<tbody>';
     foreach($bookings as $booking) {
-        echo '<tr><td><a href="bookingDetail.php?bookingID=',$booking['bookingID'],'">',$booking['bayLocation'],'</td><td>',$booking['car'],'</td>',
-                '<td>',$booking['bookingDate'],'</td></tr>';
+        echo '<tr><td><a href="bookingDetail.php?bookingID=',$booking['bookingid'],'">',$booking['site'] . ', ' . $booking['baylocation'],'</td><td>',$booking['car'],'</td>',
+                '<td>',$booking['bookingdate'],'</td></tr>';
     }
     echo '</tbody>';
     echo '</table>';

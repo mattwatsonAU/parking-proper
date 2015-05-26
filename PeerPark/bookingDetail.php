@@ -14,12 +14,12 @@ htmlHead();
 
 ?>
     <form action="bookingDetail.php" id="bookingDetail" method="post">
-	    <label>Booking ID<input readonly="readonly" name="bookingID"  value="<?php echo $book['bookingID'];?>"/></label><br />		
-        <label>Bay Location <input readonly="readonly" name="bayLocation" value="<?php echo $book['bayLocation'];?>"/></label><br />
+	    <label>Booking ID<input readonly="readonly" name="bookingID"  value="<?php echo $book['bookingid'];?>"/></label><br />		
+        <label>Bay Location <input readonly="readonly" name="bayLocation" value="<?php echo $book['site'] . ', ' . $book['baylocation'];?>"/></label><br />
         <label>Car <input readonly="readonly" name="car" value="<?php echo $book['car'];?>"/></label><br />
-		<label>Member Name <input readonly="readonly" name="memberName"  value="<?php echo $book['memberName'];?>"/></label><br />
-		<label>Booking Date<input readonly="readonly" name="bookingDate" value="<?php echo $book['bookingDate'];?>"/></label><br />
-		<label>Booking Hour<input readonly="readonly"  name="bookingHour" value="<?php echo $book['bookingHour'];?>"/></label><br/>		
+		<label>Member Name <input readonly="readonly" name="memberName"  value="<?php echo $book['membername'];?>"/></label><br />
+		<label>Booking Date<input readonly="readonly" name="bookingDate" value="<?php echo $book['bookingdate'];?>"/></label><br />
+		<label>Booking Hour<input readonly="readonly"  name="bookingHour" value="<?php echo $book['bookinghour'];?>"/></label><br/>		
 		<label>Duration<input readonly="readonly" name="duration"  value="<?php echo $book['duration'];?>"/></label><br />	
 		
     </form>

@@ -266,33 +266,6 @@ CREATE TRIGGER BillingAccountDeleteTrigger
 /* it assumes that you have loaded our unidb schema from tutorial in week 6             */
 ALTER USER cpha3003 SET search_Path = '$user', public, unidb, PeerPark;
 
-/* TESTING QUERIES */
-INSERT INTO membershipplan VALUES ('Casual', 900, 825);
-INSERT INTO membershipplan VALUES ('Frequent', 2900, 525);
-
-INSERT INTO member VALUES (1, 'drfosterFoster@gmail.com', 'drfoster', 'puddledrfoster', '', 'Dr', 'Jacob', 'Foster', 23, 'Punchs Creek Road,MOUNT TULLY QLD 4380', 'Sydney', NULL, 3, 0, 0, 'Casual', NULL, NULL);
-INSERT INTO member VALUES (2, 'mrrelativEinstein@gmail.com', 'mrrelativ', 'quantummrrelativ', '', 'Prof', 'Albert', 'Einstein', 56, 'Wynyard Street,KILLIMICAT NSW 2720', 'Sydney', null, 0, 0, 0, 'Casual', NULL, NULL);
-
-INSERT INTO billingaccount VALUES (1, 1);
-INSERT INTO billingaccount VALUES (2, 1);
-/*
-SELECT memberNo, nameGiven || ' ' || nameFamily, to_char(adrStreetNo, '999') || ' ' || adrStreet || ' ' || adrCity, email, prefBillingNo, 
-CASE WHEN prefBillingNo = 1 THEN bankAccount.name WHEN prefBillingNo = 2 THEN CreditCard.name WHEN prefBillingNo = 3 THEN PayPal.name END,
-prefBay, ParkBay.site, stat_nrOfBookings 
-FROM member LEFT OUTER JOIN BillingAccount USING (memberNo);
-*/
-SELECT memberNo, (nameGiven || ' ' || nameFamily) as name, adrStreetNo || ' ' || adrStreet || ' ' || adrCity as address, email
-								FROM Member
-								WHERE email = 'drfosterFoster@gmail.com' OR nickname = 'drfosterFoster@gmail.com'
-
-
-
-
-
-
-
-
-
 
 
 /*
