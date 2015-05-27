@@ -382,7 +382,6 @@ try {
 
         if($results[0]['avail_wk_start'] <= $bookingHour && $results[0]['avail_wk_end'] >= ($bookingHour + $duration)){
             $success = 'success';
-            printf("haapy");
         }else{
             $success = 'fail';
             print "The Bay Is Unavailable For The Requested Time";
@@ -423,13 +422,88 @@ try {
     for($i = 0; $i < 3; $i++){
         if($carDimensions[0][$i] > $bayDimensions[0][$i]){
 
-            print "\nCar dimesions too large for bay";
+            print "Car dimesions too large for bay";
             return;
         }
     }
 
+//Check that the bay is not already booked at that time
  
+try {
 
+        $stmt = $db->prepare('SELECT bookingHour, duration
+                                FROM Booking 
+                                WHERE bayID=:bayID AND bookingDate=:bookingDate');
+
+        $stmt->bindValue(':bayID', $bayID);
+        $stmt->bindValue(':bookingDate', $bookingDate);
+        //$stmt->bindValue(':bookingHour', $bookingHour);
+        //$stmt->bindValue(':duration', $duration);
+        //$stmt->bindValue(':memberNo', $memberNo);
+        //$stmt->bindValue(':car', $car);
+
+
+
+        $stmt->execute();
+        $bookingInfo = $stmt->fetchAll();
+        $stmt->closeCursor();
+
+            if($bookingInfo == array()){
+            //Then no booking for the selected ParkBay on this date and the user can book it
+                $success = 'success';
+            }else{
+                foreach($bookingInfo as $booking) {
+                   
+
+                
+                    if(($booking['bookinghour'] + $booking['duration']) >= $bookingHour || ($bookingHour + $duration) <= $booking['bookinghour']){
+                        //The selected times overlap with a previous booking and the booking cannot be made
+                        print "Error Creating Booking, The Park Bay Is Already Booked At This Time."; 
+                        return;
+                    } 
+            }
+            }
+        
+    // $stmt = $db->prepare('SELECT bookingID
+    //                             FROM Booking 
+    //                             WHERE bayID=:bayID AND bookingDate=:bookingDate 
+    //                             AND (:bookingStart, :bookingEnd) OVERLAPS ( bookingHour, (bookingHour + duration))');
+
+    
+
+    //     $stmt = $db->prepare('SELECT bookingID
+    //                             FROM Booking 
+    //                             WHERE bayID=:bayID AND bookingDate=:bookingDate 
+    //                             AND (:bookingStart, :bookingEnd) OVERLAPS ( bookingHour, (bookingHour + duration))');
+    //     //   WHERE (bookingDate, bookingDate) OVERLAPS ( '2007-01-01'::Date, '2008-04-12'::Date)");
+
+    //     $stmt->bindValue(':bayID', $bayID);
+    //     $stmt->bindValue(':bookingDate', $bookingDate);
+    //     $stmt->bindValue(':bookingStart', $bookingHour);
+    //     $stmt->bindValue(':bookingEnd', ($bookingHour + $duration));
+    //     //$stmt->bindValue(':memberNo', $memberNo);
+    //     //$stmt->bindValue(':car', $car);
+
+
+
+    //     $stmt->execute();
+    //     $bookingInfo = $stmt->fetchAll();
+    //     $stmt->closeCursor();
+
+    //         if($bookingInfo == array()){
+    //         //Then no booking for the selected ParkBay on this date and the user can book it
+    //             $success = 'success';
+    //         }else{
+    //             print "Error Creating Booking, The Park Bay Is Already Booked At This Time."; 
+    //             return;
+    //         }
+        
+    } catch (PDOException $e) { 
+         $success = 'fail';
+         print("hey");
+         print "Error creating booking: That booking already exists"; 
+         return;
+    }
 
      
     try {
@@ -455,8 +529,6 @@ try {
          $success = 'fail';
          print "\nError creating booking: That booking already exists"; 
          return;
-        //print "Error creating Booking: " . $e->getMessage(); 
-        //die();
     }
 
  try {  //Use the unique triple of bayID, bookingDate and bookingHour to obtain the default created bookingID
@@ -475,8 +547,8 @@ try {
 
     } catch (PDOException $e) { 
          $success = 'fail';
-        print "Error reading Booking ID: " . $e->getMessage(); 
-        die();
+        print "Error Reading Booking ID"; 
+        return;
     }
      // return array(
      //    'status'=>$success,
