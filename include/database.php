@@ -339,7 +339,8 @@ function getOpenBookings($memberNo) {
 function makeBooking($memberNo,$car,$bayID,$bookingDate,$bookingHour,$duration) {
    
    $db = connect();
-
+   //Start a new transaction
+   $db->beginTransaction();
 //Check that the bayId exists and get the bay dimensions
 try {
         $stmt = $db->prepare('SELECT length, width, height FROM ParkBay WHERE bayID=:bayID');
@@ -354,6 +355,7 @@ try {
          if($bayDimensions == array()){
             $success = 'fail';
             print "No Bay With That ID Exists. Please Use Search Page To Find A Bay."; 
+            $db->rollBack();
             return;
         }else{
            $success = 'success'; 
@@ -362,6 +364,7 @@ try {
 
     }catch (PDOException $e) { 
         print "No Bay With That ID Exists. Please Use Search Page To Find A Bay."; 
+        $db->rollBack();
         return;
     }
 
@@ -385,12 +388,14 @@ try {
         }else{
             $success = 'fail';
             print "The Bay Is Unavailable For The Requested Time";
+            $db->rollBack();
             return;
         }
         
     } catch (PDOException $e) { 
          $success = 'fail';
          print "The Bay Is Unavailable For The Requested Time"; 
+         $db->rollBack();
          return;
     }
 
@@ -409,12 +414,14 @@ try {
 
         if($carDimensions == array()){
             print "You Do Not Own A Car With That Name."; 
+            $db->rollBack();
             return;
         }
 
 
     }catch (PDOException $e) { 
         print "Error Fecthing Car Dimensions: "; 
+        $db->rollBack();
         return;
     }
 
@@ -423,6 +430,7 @@ try {
         if($carDimensions[0][$i] > $bayDimensions[0][$i]){
 
             print "Car dimesions too large for bay";
+            $db->rollBack();
             return;
         }
     }
@@ -458,7 +466,8 @@ try {
                 
                     if(($booking['bookinghour'] + $booking['duration']) >= $bookingHour || ($bookingHour + $duration) <= $booking['bookinghour']){
                         //The selected times overlap with a previous booking and the booking cannot be made
-                        print "Error Creating Booking, The Park Bay Is Already Booked At This Time."; 
+                        print "Error Creating Booking, The Park Bay Is Already Booked At This Time.";
+                        $db->rollBack(); 
                         return;
                     } 
             }
@@ -469,7 +478,7 @@ try {
     //                             WHERE bayID=:bayID AND bookingDate=:bookingDate 
     //                             AND (:bookingStart, :bookingEnd) OVERLAPS ( bookingHour, (bookingHour + duration))');
 
-    
+
 
     //     $stmt = $db->prepare('SELECT bookingID
     //                             FROM Booking 
@@ -501,7 +510,8 @@ try {
     } catch (PDOException $e) { 
          $success = 'fail';
          print("hey");
-         print "Error creating booking: That booking already exists"; 
+         print "Error creating booking: That booking already exists";
+         $db->rollBack(); 
          return;
     }
 
@@ -527,7 +537,8 @@ try {
         
     } catch (PDOException $e) { 
          $success = 'fail';
-         print "\nError creating booking: That booking already exists"; 
+         print "\nError creating booking: That booking already exists";
+         $db->rollBack(); 
          return;
     }
 
@@ -546,20 +557,11 @@ try {
         $stmt->closeCursor();
 
     } catch (PDOException $e) { 
-         $success = 'fail';
-        print "Error Reading Booking ID"; 
+        $success = 'fail';
+        print "Error Reading Booking ID";
+        $db->rollBack(); 
         return;
     }
-     // return array(
-     //    'status'=>$success,
-     //    'bookingID'=>$bookingID,
-     //    'bayID'=>$bayID,
-     //    'car'=>$car,
-     //    'bookingDate'=>$bookingDate,
-     //    'bookingHour'=>$bookingHour,
-     //    'duration'=>$duration,
-     //    'cost'=>$cost
-     //     );
 
 
     try {
@@ -580,9 +582,13 @@ try {
 
     } catch (PDOException $e) { 
          $success = 'fail';
-        print "Error creating Booking2: " . $e->getMessage(); 
-        die();
+        print "Error creating Booking"; 
+        $db->rollBack();
+        return;
     }
+
+    //Commit the transaction if everything worked
+    $db->commit();
 
      return array(
         'status'=>$success,
