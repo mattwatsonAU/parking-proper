@@ -292,6 +292,7 @@ function makeBooking($memberNo,$car,$bayID,$bookingDate,$bookingHour,$duration) 
 	}
 	
 		//Check that the bay is available for the requested time
+		/*
 	try {
 		$stmt = $db->prepare("SELECT avail_wk_start, avail_wk_end
 								FROM ParkBay
@@ -317,7 +318,7 @@ function makeBooking($memberNo,$car,$bayID,$bookingDate,$bookingHour,$duration) 
 		print "<br />The Bay Is Unavailable For The Requested Time";
 		return;
 	}
-	
+	*/
 	// inserting booking into database, exceptions are raised if the booking already exists
 	try {				
 		$stmt = $db->prepare("SELECT * FROM makeBooking(:bayID, :bookingDate, :bookingHour, :duration, :memberNo, :car)");
@@ -489,7 +490,7 @@ function getInvoice($memberNo) {
 	$db = connect();
 	
 	try {
-		$stmt = $db->prepare("SELECT bookingID, duration
+		$stmt = $db->prepare("SELECT bookingID, duration, bayID
 								FROM Booking
 								WHERE date_part('month', bookingDate) = date_part('month', CURRENT_DATE)
 								AND   date_part('year', bookingDate) = date_part('year', CURRENT_DATE)
@@ -508,4 +509,32 @@ function getInvoice($memberNo) {
 	
 	return $results;
 }
+
+/**
+Retrieves invoice of the previous month
+*/
+function getPreviousInvoice($memberNo, $month, $year){
+    $db = connect();
+ try {
+   
+        $stmt = $db->prepare("SELECT bookingID, duration, bayID
+                                FROM Booking 
+                                WHERE date_part('month', bookingDate)=:month 
+                                AND date_part('year', bookingDate)=:year 
+                                AND memberNo=:memberNo");
+        $stmt->bindValue(':memberNo', $memberNo, PDO::PARAM_INT);
+        $stmt->bindValue(':month', $month);
+        $stmt->bindValue(':year', $year);
+        $stmt->execute();
+        $results = $stmt->fetchAll();
+        $stmt->closeCursor(); 
+        }catch (PDOException $e) { 
+        print "Error generating invoice"; 
+        return;
+    }
+    //print_r($results);
+  
+    return $results;
+}
+
 ?>
