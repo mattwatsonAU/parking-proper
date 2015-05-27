@@ -57,7 +57,7 @@ function checkLogin($name,$pass) {
 		$results = $stmt->fetch(PDO::FETCH_ASSOC);
 		$stmt->closeCursor();
 	} catch (PDOException $e) {
-		print "Error finding username or password: " . $e->getMessage();
+		print "Error finding username or password.";
 		die();
 	}
 	
@@ -78,17 +78,7 @@ function getUserDetails($user) {
 	$db = connect();
 	
 	try {
-		$stmt = $db->prepare("SELECT Member.memberNo, (nameGiven || ' ' || nameFamily) as name, (adrStreet) as address, Member.email,
-									prefBillingNo, (CASE WHEN prefBillingNo = 1 THEN (SELECT BankAccount.name FROM BankAccount WHERE BankAccount.memberNo = Member.memberNo)
-											WHEN prefBillingNo = 2 THEN (SELECT CreditCard.name FROM CreditCard WHERE CreditCard.memberNo = Member.memberNo)
-											WHEN prefBillingNo = 3 THEN (SELECT email FROM PayPal WHERE PayPal.memberNo = Member.memberNo) 
-											END) as prefbillingname,
-									prefBay, (site) as prefbayname,
-									stat_nrOfBookings as nbookings
-								
-								FROM Member LEFT OUTER JOIN ParkBay ON (prefBay = bayID)
-										
-								WHERE memberNo = :memberNo");
+		$stmt = $db->prepare("SELECT * FROM getUserDetails(:memberNo)");
 
 		$stmt->bindValue(':memberNo', $user, PDO::PARAM_INT);
 		
@@ -97,7 +87,7 @@ function getUserDetails($user) {
 		
 		$stmt->closeCursor();
 	} catch (PDOException $e) {
-		print "Error finding user details: " - $e->getMessage();
+		print "Error finding user details.";
 		die();
 	}
 	
@@ -115,7 +105,7 @@ function searchBay($address) {
 	try {
 		$stmt = $db->prepare("SELECT bayID, site, address 
 								FROM ParkBay
-								WHERE address SIMILAR TO ('%' || :address || '%')
+								WHERE lower(address) SIMILAR TO lower('%' || :address || '%') OR lower(site) SIMILAR TO lower('%' || :address || '%')
 								ORDER BY bayID");
 								
 		$stmt->bindValue(':address', $address);
@@ -125,7 +115,7 @@ function searchBay($address) {
 		
 		$stmt->closeCursor();	
 	} catch (PDOException $e) {
-		print "Error finding searching the bay : " - $e->getMessage();
+		print "Error finding searching the bay.";
 		die();
 	}
 	
@@ -141,7 +131,7 @@ function getBays() {
 	$db = connect();
 	
 	try {
-		$stmt = $db->prepare("SELECT bayID, site, address 
+		$stmt = $db->prepare("SELECT *
 								FROM ParkBay 
 								ORDER BY bayID ASC");
 		
@@ -150,7 +140,7 @@ function getBays() {
 		
 		$stmt->closeCursor();
 	} catch (PDOException $e) {
-		print "Error retrieving list of bays : " - $e->getMessage();
+		print "Error retrieving list of bays.";
 		die();
 	}
 	
@@ -178,7 +168,7 @@ function getPrefBayInformation($memberNo) {
 		
 		$stmt->closeCursor();	
 	} catch (PDOException $e) {
-		print "Error finding preferred bay details: " - $e->getMessage();
+		print "Error finding preferred bay details.";
 		die();
 	}
 	
@@ -223,10 +213,7 @@ function getOpenBookings($memberNo) {
     $db = connect();
 	
 	try {
-		$stmt = $db->prepare("SELECT bookingID, bayID, car, bookingDate, bookingHour, duration, (address) as baylocation, site
-								FROM Booking NATURAL JOIN ParkBay
-								WHERE memberNo = :memberNo 
-								ORDER BY bookingDate DESC");
+		$stmt = $db->prepare("SELECT * FROM getOpenBookings(:memberNo)");
 		
 		$stmt->bindValue(':memberNo', $memberNo);
 		
@@ -259,9 +246,7 @@ function makeBooking($memberNo,$car,$bayID,$bookingDate,$bookingHour,$duration) 
 	
 	// check if car dimensions are greater than the bay dimensions
 	try {
-		$stmt = $db->prepare("SELECT length, width, height
-								FROM CarType NATURAL JOIN Car 
-								WHERE memberNo = :memberNo AND name = :car");
+		$stmt = $db->prepare("SELECT * FROM carDimensions(:memberNo, :car)");
 								
 		$stmt->bindValue(':memberNo', $memberNo);
 		$stmt->bindValue(':car', $car);
@@ -281,9 +266,16 @@ function makeBooking($memberNo,$car,$bayID,$bookingDate,$bookingHour,$duration) 
 		
 		$stmt->closeCursor();
 		
-		if (!$carDimensions || !$bayDimensions) {
-			print "<br />Invalid car or bay";
-			return;
+		if (!$carDimensions) {
+			$success = "fail";
+			print "<br />You Do Not Own A Car With That Name."; 
+            return;
+		}
+		
+		if (!$bayDimensions) {
+			$success = "fail";
+			print "<br />No Bay With That ID Exists. Please Use Search Page To Find A Bay."; 
+            return;
 		}
 		
 		// check dimensions of the car and bay
@@ -295,14 +287,40 @@ function makeBooking($memberNo,$car,$bayID,$bookingDate,$bookingHour,$duration) 
 		}
 		
 	} catch (PDOException $e) { 
-        print "Error getting car or bay dimensions: " - $e->getMessage(); 
+        print "<br />Error getting car or bay dimensions"; 
         die();
 	}
 	
-	// inserting booking into database, exceptions are raised if the booking already exists
+		//Check that the bay is available for the requested time
 	try {
-		$stmt = $db->prepare("INSERT INTO Booking
-								VALUES(DEFAULT, :bayID, :bookingDate, :bookingHour, :duration, :memberNo, :car)");
+		$stmt = $db->prepare("SELECT avail_wk_start, avail_wk_end
+								FROM ParkBay
+								WHERE bayID = :bayID");
+		
+		$stmt->bindValue(':bayID', $bayID);
+		
+		$stmt->execute();
+		$results = $stmt->fetchAll();
+		$stmt->closeCursor();
+		
+		if ($results[0]['avail_wk_start'] <= $bookingHour && $results[0]['avail_wk_end'] >= ($bookingHour + $duration)) {
+			$success = "success";
+		}
+		else {
+			$success = "fail";
+			print "<br />The Bay is Unavailable For The Requested Time";
+			return;
+		}
+		
+	} catch (PDOException $e) {
+		$sucess = "fail";
+		print "<br />The Bay Is Unavailable For The Requested Time";
+		return;
+	}
+	
+	// inserting booking into database, exceptions are raised if the booking already exists
+	try {				
+		$stmt = $db->prepare("SELECT * FROM makeBooking(:bayID, :bookingDate, :bookingHour, :duration, :memberNo, :car)");
 		
 		$stmt->bindValue(':bayID', $bayID);
 		$stmt->bindValue(':bookingDate', $bookingDate);
@@ -317,8 +335,8 @@ function makeBooking($memberNo,$car,$bayID,$bookingDate,$bookingHour,$duration) 
 		$stmt->closeCursor();
 	} catch (PDOException $e) { 
 		$success = "fail";
-        print "\nError creating booking: That booking already exists: " - $e->getMessage(); 
-        die();
+        print "<br />Error creating booking: That booking already exists";
+        return;
 	}
 	
 	// retrieve bookingID and calculating the cost to return into an array after successfully inserting a booking to the database
@@ -335,33 +353,20 @@ function makeBooking($memberNo,$car,$bayID,$bookingDate,$bookingHour,$duration) 
 		$bookingID = $stmt->fetchColumn();
 		
 		$stmt->closeCursor();
-		$stmt->$db->prepare("SELECT hourly_rate
-								FROM Member LEFT OUTER JOIN MembershipPlan ON (plan = title)
-								WHERE memberNo = :memberNo");
+		$stmt = $db->prepare("SELECT * FROM calculateCost(:memberNo, :duration)");
 		
 		$stmt->bindValue(':memberNo', $memberNo);
+		$stmt->bindValue(':duration', $duration);
 		
 		$stmt->execute();
-		$hourly_rate = $stmt->fetchColumn();
-
-		$cost = $hourly_rate * $duration;
+		$cost = $stmt->fetchColumn();
+	
 		$stmt->closeCursor();		
 	} catch (PDOException $e) {
 		$success = "fail";
-		print "Error reading Booking ID or reading plan hourly rate : " - $e->getMessage();
-		die();
+		print "<br />Error reading Booking ID or reading plan hourly rate";
+		return;
 	}
-	/*
-    return array(
-        'status'=>'success',
-        'bookingID'=>2,
-        'bayID'=>2,
-        'car'=>'Garry the Getz',
-	    'bookingDate'=>'25/07/14',
-	    'bookingHour'=>10,
-	    'duration'=>1,
-		'cost'=>1000
-    );*/
 	
 	return array(
 		'status'=>$success,
@@ -385,9 +390,7 @@ function getBookingInfo($bookingID) {
 	$db = connect();
 	
 	try {
-		$stmt = $db->prepare("SELECT bookingID, (address) as baylocation, bookingDate, bookingHour, duration, car, (nameGiven || ' ' || nameFamily) as membername, site
-								FROM Booking NATURAL JOIN Member NATURAL JOIN Parkbay
-								WHERE bookingID = :bookingID");
+		$stmt = $db->prepare("SELECT * FROM getBookingInfo(:bookingID)");
 								
 		$stmt->bindValue(':bookingID', $bookingID);
 		
@@ -463,9 +466,7 @@ function getPlanDetails($memberNo) {
 	$db = connect();
 	
 	try {
-		$stmt = $db->prepare("SELECT hourly_rate, monthly_fee
-								FROM MembershipPlan JOIN Member ON (plan = title)
-								WHERE memberNo = :memberNo");
+		$stmt = $db->prepare("SELECT * FROM getPlanDetails(:memberNo)");
 								
 		$stmt->bindValue(':memberNo', $memberNo, PDO::PARAM_INT);
 		

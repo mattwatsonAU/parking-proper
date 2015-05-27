@@ -14,7 +14,7 @@ try {
     echo '<h2>memberNo</h2> ',$details['memberno'];
     echo '<h2>Name</h2> ',$details['name'];
     echo '<h2>eMail</h2> ',$details['email'];
-    echo '<h2>Address</h2> ',$details['address'];
+    echo '<h2>Address</h2> ', "Street No. - " . $details['adrstreetno'], "<br />Street - " . $details['adrstreet'], "<br />City - " . $details['adrcity'];
 	if ($details['prefbay'] === null) {
 		echo '<h2>Preferred Bay</h2>', 'No preferred bay';
 	}
@@ -22,7 +22,7 @@ try {
 		if ($details['prefbayname'] == '') {
 			$details['prefbayname'] = 'No name given to preferred bay';
 		}
-		echo '<h2>Preferred Bay</h2>',$details['prefbay'],' - ',$details['prefbayname'];
+		echo '<h2>Preferred Bay</h2>',"Bay ID - " . $details['prefbay'], "<br />Bay Name - " . $details['prefbayname'];
 	}
 	
 	if ($details['prefbillingno'] === null) {
@@ -32,7 +32,7 @@ try {
 		if ($details['prefbillingname'] == '') {
 			$details['prefbillingname'] = 'No name given to preferred billing acount';
 		}
-		echo '<h2>Preferred Billing </h2>',$details['prefbillingno'],' - ',$details['prefbillingname'];
+		echo '<h2>Preferred Billing </h2>',"Billing No. - " . $details['prefbillingno'], "<br />Billing Name - " . $details['prefbillingname'];
 	}
     
 } catch (Exception $e) {

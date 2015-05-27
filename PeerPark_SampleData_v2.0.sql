@@ -9024,9 +9024,6 @@ ALTER TABLE PeerPark.Member
 ALTER TABLE member ALTER COLUMN prefBillingNo SET NOT NULL;
 
 /* Query Testing */
-SELECT bayID, site, address 
-									FROM Member LEFT OUTER JOIN ParkBay ON (prefBay = bayID)
-									WHERE Member.memberNo = 18
 									    
 								
 

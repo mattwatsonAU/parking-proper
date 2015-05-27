@@ -266,6 +266,179 @@ CREATE TRIGGER BillingAccountDeleteTrigger
 /* it assumes that you have loaded our unidb schema from tutorial in week 6             */
 ALTER USER cpha3003 SET search_Path = '$user', public, unidb, PeerPark;
 
+/* STORED PROCEDURES */
+
+-- getUserDetails() in database.php
+CREATE OR REPLACE FUNCTION getUserDetails
+(arg1 INTEGER) RETURNS TABLE(
+	memberNo INTEGER,
+	name text,
+	adrStreetNo INTEGER,
+	adrStreet VARCHAR,
+	adrCity VARCHAR,
+	email emailtype,
+	prefBillingNo INTEGER,
+	prefbillingname VARCHAR,
+	prefBay INTEGER,
+	prefbayname VARCHAR,
+	nbookings INTEGER
+)AS $$
+BEGIN
+	RETURN QUERY
+		SELECT Member.memberNo, Member.nameGiven || ' ' || Member.nameFamily, Member.adrStreetNo, Member.adrStreet, Member.adrCity, Member.email,
+									Member.prefBillingNo, (CASE WHEN Member.prefBillingNo = 1 THEN (SELECT BankAccount.name FROM BankAccount WHERE BankAccount.memberNo = Member.memberNo)
+											WHEN Member.prefBillingNo = 2 THEN (SELECT CreditCard.name FROM CreditCard WHERE CreditCard.memberNo = Member.memberNo)
+											WHEN Member.prefBillingNo = 3 THEN (SELECT PayPal.email FROM PayPal WHERE PayPal.memberNo = Member.memberNo) 
+											END),
+									Member.prefBay, ParkBay.site,
+									Member.stat_nrOfBookings
+								
+		FROM Member LEFT OUTER JOIN ParkBay ON (Member.prefBay = ParkBay.bayID)		
+		WHERE Member.memberNo = arg1;
+END;
+$$ LANGUAGE plpgsql;
+	
+-- getPrefBayInformation() in database.php CANT START UNTIL AVAILABILITY WORKS
+/*
+CREATE OR REPLACE FUNCTION getPrefBayInformation
+(arg1 INTEGER) RETURNS TABLE (
+	bayID SERIAL,
+	owner INTEGER,
+	gps_lat FLOAT,
+	gps_long FLOAT,
+	address VARCHAR,
+	width INTEGER,
+	height INTEGER,
+	length INTEGER,
+	pod INTEGER,
+	site VARCHAR,
+	avail_wk_start SMALLINT,
+	avail_wk_end SMALLINT,
+	avail_wend_start SMALLINT,
+	avail_wend_end SMALLINT
+) AS $$
+BEGIN
+RETURN QUERY
+SELECT ParkBay.bayID, ParkBay.owner, ParkBay.gps_lat, ParkBay.gps_long, ParkBay.address , ParkBay.width, ParkBay.height, ParkBay.length, ParkBay.pod, ParkBay.site, ParkBay.avail_wk_start, ParkBay.avail_wk_end, ParkBay.avail_wend_start, ParkBay.avail_wend_end
+									FROM Member LEFT OUTER JOIN ParkBay ON (Member.prefBay = ParkBay.bayID)
+									WHERE Member.memberNo = arg1;
+END;
+$$ LANGUAGE plpgsql;
+*/
+
+-- getOpenBookings() in database.php
+CREATE OR REPLACE FUNCTION getOpenBookings
+(arg1 INTEGER) RETURNS TABLE (
+	bookingID INTEGER,
+	bayID INTEGER,
+	car VARCHAR,
+	bookingDate DATE,
+	bookingHour INTEGER,
+	duration INTEGER,
+	baylocation VARCHAR,
+	site VARCHAR
+) AS $$
+BEGIN
+	RETURN QUERY
+		SELECT Booking.bookingID, Booking.bayID, Booking.car, Booking.bookingDate, Booking.bookingHour, Booking.duration, ParkBay.address, ParkBay.site
+		FROM Booking NATURAL JOIN ParkBay
+		WHERE Booking.memberNo = arg1 
+		ORDER BY Booking.bookingDate DESC;
+END;
+$$ LANGUAGE plpgsql;
+
+
+-- makeBookings() in database.php
+CREATE OR REPLACE FUNCTION carDimensions
+(arg1 INTEGER, arg2 VARCHAR) RETURNS TABLE (
+	length INTEGER,
+	width INTEGER,
+	height INTEGER
+) AS $$
+BEGIN
+	RETURN QUERY
+		SELECT CarType.length, CarType.width, CarType.height
+		FROM CarType NATURAL JOIN Car 
+		WHERE Car.memberNo = arg1 AND Car.name = arg2;
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+
+
+
+
+CREATE OR REPLACE FUNCTION calculateCost
+(arg1 INTEGER, arg2 INTEGER) RETURNS TABLE (
+	hourly_rate amountincents 
+) AS $$
+BEGIN
+	RETURN QUERY
+		SELECT (MembershipPlan.hourly_rate * arg2)::amountincents
+		FROM Member LEFT OUTER JOIN MembershipPlan ON (Member.plan = MembershipPlan.title)
+		WHERE Member.memberNo = arg1;
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+
+
+
+CREATE OR REPLACE FUNCTION makeBooking
+(arg1 INTEGER, arg2 DATE, arg3 INTEGER, arg4 INTEGER, arg5 INTEGER, arg6 VARCHAR) RETURNS void 
+AS $$
+BEGIN
+	INSERT INTO Booking 
+	VALUES(DEFAULT, arg1, arg2, arg3, arg4, arg5, arg6);
+END;
+$$ LANGUAGE plpgsql;
+
+
+-- getBookingInfo() in database.php
+CREATE OR REPLACE FUNCTION getBookingInfo
+(arg1 INTEGER) RETURNS TABLE (
+	bookingID INTEGER,
+	baylocation VARCHAR,
+	bookingDate DATE,
+	bookingHour INTEGER,
+	duration INTEGER,
+	car VARCHAR,
+	membername text,
+	site VARCHAR
+) AS $$
+BEGIN
+	RETURN QUERY
+		SELECT Booking.bookingID, ParkBay.address, Booking.bookingDate, Booking.bookingHour, Booking.duration, Booking.car, (Member.nameGiven || ' ' || Member.nameFamily), ParkBay.site
+		FROM Booking NATURAL JOIN Member NATURAL JOIN Parkbay
+		WHERE Booking.bookingID = arg1;
+END;
+$$ LANGUAGE plpgsql;
+
+-- getPlanDetails() in database.php
+CREATE OR REPLACE FUNCTION getPlanDetails
+(arg1 INTEGER) RETURNS TABLE (
+	hourly_rate amountincents, 
+	monthly_fee amountincents
+) AS $$
+BEGIN
+	RETURN QUERY
+		SELECT MembershipPlan.hourly_rate, MembershipPlan.monthly_fee
+		FROM MembershipPlan JOIN Member ON (Member.plan = MembershipPlan.title)
+		WHERE Member.memberNo = arg1;		
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+
+
+
+
+
+
+
 
 
 /*

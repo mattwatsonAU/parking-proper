@@ -23,11 +23,11 @@ echo 'Submitting booking.';
         $booking = makeBooking($_SESSION['memberNo'], $_REQUEST['carname'], $_REQUEST['bayID'], $_REQUEST['parkdate'], $_REQUEST['parktime'], $_REQUEST['duration']);
         if($booking['status'] == 'success') { 
             echo '<h2>Congratulations, you\'ve made a new new booking!';
-			echo '<h2>Booking ID</h2> ',$booking['bookingid'];
+			echo '<h2>Booking ID</h2> ',$booking['bookingID'];
 			echo '<h2>Car</h2> ',$booking['car'];
-			echo '<h2>Bay ID</h2> ',$booking['bayid'];
-			echo '<h2>Date</h2> ',$booking['bookingdate'];
-			echo '<h2>Hour</h2> ',$booking['bookinghour'];
+			echo '<h2>Bay ID</h2> ',$booking['bayID'];
+			echo '<h2>Date</h2> ',$booking['bookingDate'];
+			echo '<h2>Hour</h2> ',$booking['bookingHour'];
 			echo '<h2>Duration</h2> ',$booking['duration'];
 			echo '<h2>Booking Cost</h2> ',$booking['cost'];
         } else {
