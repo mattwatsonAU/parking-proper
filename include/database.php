@@ -151,48 +151,30 @@ function getUserDetails($user) {
  * @return array Various details of each bay - see baylist.php
  */
 function searchBay($address) {
-    // STUDENT TODO:
-    // Change lines below with code to retrieve the Bays with similar address from the database
 
 $db =connect();
 try{
 
     //Regex the address and return all parkbays that match
     //Use lower() to make the search case insensitive
-    // $stmt = $db->prepare("SELECT * FROM ParkBay WHERE lower(address) SIMILAR TO lower('Sydney%')");
-    $stmt = $db->prepare("SELECT * FROM ParkBay WHERE lower(address) SIMILAR TO lower(':address%')");
-    //$stmt = $db->prepare("SELECT * FROM ParkBay");
+    $stmt = $db->prepare("SELECT * 
+                            FROM ParkBay 
+                            WHERE lower(address) SIMILAR TO lower('%' || :address || '%') OR 
+                            lower(site) SIMILAR TO lower('%' || :address || '%')
+                            ORDER BY bayID");
+
+    
     $stmt->bindValue(':address', $address);
+
     $stmt->execute();
     $bayList = $stmt->fetchAll();
     $stmt->closeCursor();
-
-//SELECT * FROM ParkBay WHERE address SIMILAR TO 'Sydney%' OR address SIMILAR TO '%Sydney' OR address SIMILAR TO '%Sydney%'
-    //SELECT * FROM ParkBay WHERE lower(address) SIMILAR TO lower('sydney%')
 
 }catch(PDOException $e){
     print "No bays match that search."; 
     return;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-$results = array(
-        array('bayID'=>954673, 'site'=> 'Sydney Uni Camp1', 'address'=> 'Search Add1', 'avail'=>true),
-        array('bayID'=>344578, 'site'=> 'Sydney Uni Camp2', 'address'=> 'Search Add2', 'avail'=>false)
-    );
-    //return $results;
     return $bayList;
 }
 
@@ -212,12 +194,13 @@ function getBays() {
     try{
 
     //Regex the address and return all parkbays that match
-        $stmt = $db->prepare("SELECT * FROM ParkBay");
+        $stmt = $db->prepare("SELECT * 
+                                FROM ParkBay 
+                                ORDER BY bayID");
        
         $stmt->execute();
         $bayList = $stmt->fetchAll();
         $stmt->closeCursor();
-
 
 
     }catch(PDOException $e){
@@ -225,11 +208,6 @@ function getBays() {
         return;
     }
 
-  //   $results = array(
-  //       array('bayID'=>896541, 'site'=> 'Library', 'address'=> 'Glebe Point Road', 'avail'=>true),
-  //       array('bayID'=>954673, 'site'=> 'Sydney Uni','address'=> 'Camperdown', 'avail'=>true),
-		// array('bayID'=>321567, 'site'=> 'UTS', 'address'=> 'Ultimo', 'avail'=>false)
-  //   );
     return $bayList;
 }
 
@@ -359,13 +337,64 @@ function getOpenBookings($memberNo) {
  * @throws Exception
  */
 function makeBooking($memberNo,$car,$bayID,$bookingDate,$bookingHour,$duration) {
-    // STUDENT TODO:
-    // Replace lines below with code to create a booking and return the outcome
-
-    /*if ($user != 'testuser') throw new Exception('Unknown user');*/
+   
    $db = connect();
 
-   /*Check that the car fits the bayID requested*/
+//Check that the bayId exists and get the bay dimensions
+try {
+        $stmt = $db->prepare('SELECT length, width, height FROM ParkBay WHERE bayID=:bayID');
+
+        $stmt->bindValue(':bayID', $bayID);
+
+        $stmt->execute();
+        
+        $bayDimensions = $stmt->fetchAll();
+        
+        $stmt->closeCursor();
+         if($bayDimensions == array()){
+            $success = 'fail';
+            print "No Bay With That ID Exists. Please Use Search Page To Find A Bay."; 
+            return;
+        }else{
+           $success = 'success'; 
+        }
+
+
+    }catch (PDOException $e) { 
+        print "No Bay With That ID Exists. Please Use Search Page To Find A Bay."; 
+        return;
+    }
+
+   //Check that the bay is available for the requested time
+        try {
+
+        $stmt = $db->prepare('SELECT avail_wk_start, avail_wk_end
+                                FROM ParkBay
+                                WHERE bayID=:bayID');
+                               //WHERE (avail_wk_start, avail_wk_end) OVERLAPS (:bookingHour, :bookingEnd)");');
+                                //WHERE (:bookingHour, :bookingHour+:duration) OVERLAPS ( avail_wk_start, avail_wk_end)");');
+
+        $stmt->bindValue(':bayID', $bayID);
+        $stmt->execute();
+        $results = $stmt->fetchAll();
+        $stmt->closeCursor();
+
+
+        if($results[0]['avail_wk_start'] <= $bookingHour && $results[0]['avail_wk_end'] >= ($bookingHour + $duration)){
+            $success = 'success';
+            printf("haapy");
+        }else{
+            $success = 'fail';
+            print "The Bay Is Unavailable For The Requested Time";
+            return;
+        }
+        
+    } catch (PDOException $e) { 
+         $success = 'fail';
+         print "The Bay Is Unavailable For The Requested Time"; 
+         return;
+    }
+
    //Get the car dimensions
 try {
         $stmt = $db->prepare('SELECT length, width, height FROM CarType NATURAL JOIN Car WHERE memberNo=:memberNo AND name=:car');
@@ -379,25 +408,10 @@ try {
         
         $stmt->closeCursor();
 
-
-
-    }catch (PDOException $e) { 
-        print "Error Fecthing Car Dimensions: "; 
-        return;
-    }
-
-//Get the bay dimensions
-try {
-        $stmt = $db->prepare('SELECT length, width, height FROM ParkBay WHERE bayID=:bayID');
-
-        $stmt->bindValue(':bayID', $bayID);
-
-        $stmt->execute();
-        
-        $bayDimensions = $stmt->fetchAll();
-        
-        $stmt->closeCursor();
-
+        if($carDimensions == array()){
+            print "You Do Not Own A Car With That Name."; 
+            return;
+        }
 
 
     }catch (PDOException $e) { 
@@ -406,26 +420,20 @@ try {
     }
 
 //Compare the car and bay dimensions
-    //$sizeFits = true;
     for($i = 0; $i < 3; $i++){
         if($carDimensions[0][$i] > $bayDimensions[0][$i]){
-        //if($carDimensions[$i] > $bayDimensions[$i]){
 
             print "\nCar dimesions too large for bay";
             return;
         }
-        //print_r($carDimensions[0]);
     }
 
-
-
-
-//Status: check bayID exists and the car exists for the memNO (STILL TODO)
-
+ 
 
 
      
     try {
+
         $stmt = $db->prepare('INSERT INTO Booking VALUES (DEFAULT, :bayID, :bookingDate, :bookingHour, :duration, :memberNo, :car)');
         //INSERT INTO Booking VALUES (DEFAULT, 20, CURRENT_DATE, 9, 2, 1, 'Lance the Yaris')
 

@@ -12,10 +12,8 @@ htmlHead();
 try {
 
 	if (!empty($_REQUEST['bayAddress']) )
-	  {
-	  	print_r($_REQUEST['bayAddress']);
+	  { 	
 	   $bays = searchBay($_REQUEST['bayAddress']);
-	   //print_r($bays);
 	  }
 	else if(isset($_REQUEST['all'])){
 	    $bays = getBays();

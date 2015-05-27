@@ -18,7 +18,7 @@ $submit =!empty($_REQUEST['carname'])
 $booking = null;
 	
 if ($submit) {
-echo 'Submitting booking.';
+
     try {
 
         $booking = makeBooking($_SESSION['memberNo'], $_REQUEST['carname'], $_REQUEST['bayID'], $_REQUEST['parkdate'], $_REQUEST['parktime'], $_REQUEST['duration']);
