@@ -29,7 +29,7 @@ echo 'Submitting booking.';
 			echo '<h2>Date</h2> ',$booking['bookingDate'];
 			echo '<h2>Hour</h2> ',$booking['bookingHour'];
 			echo '<h2>Duration</h2> ',$booking['duration'];
-			echo '<h2>Booking Cost</h2> ',$booking['cost'];
+			echo '<h2>Booking Cost</h2> ','$', number_format($booking['cost']/100, 2, '.', '');
         } else {
             echo '<h2>Sorry, couldn\'t make a booking:</h2>', $booking['status'];
         }

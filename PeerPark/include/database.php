@@ -244,6 +244,8 @@ function getOpenBookings($memberNo) {
 function makeBooking($memberNo,$car,$bayID,$bookingDate,$bookingHour,$duration) {
 	$db = connect();
 	
+	$db->beginTransaction();
+	
 	// check if car dimensions are greater than the bay dimensions
 	try {
 		$stmt = $db->prepare("SELECT * FROM carDimensions(:memberNo, :car)");
@@ -268,13 +270,15 @@ function makeBooking($memberNo,$car,$bayID,$bookingDate,$bookingHour,$duration) 
 		
 		if (!$carDimensions) {
 			$success = "fail";
-			print "<br />You Do Not Own A Car With That Name."; 
+			print "<br />You Do Not Own A Car With That Name.";
+			$db->rollBack();
             return;
 		}
 		
 		if (!$bayDimensions) {
 			$success = "fail";
 			print "<br />No Bay With That ID Exists. Please Use Search Page To Find A Bay."; 
+			$db->rollBack();
             return;
 		}
 		
@@ -282,17 +286,18 @@ function makeBooking($memberNo,$car,$bayID,$bookingDate,$bookingHour,$duration) 
 		for ($i = 0; $i < 3; $i++) {
 			if ($carDimensions[0][$i] > $bayDimensions[0][$i]) {
 				print "<br />Car Dimensions too large for bay";
+				$db->rollBack();
 				return;
 			}
 		}
 		
 	} catch (PDOException $e) { 
         print "<br />Error getting car or bay dimensions"; 
-        die();
+		$db->rollBack();
+        return;
 	}
 	
-		//Check that the bay is available for the requested time
-		/*
+	//Check that the bay is available for the requested time
 	try {
 		$stmt = $db->prepare("SELECT avail_wk_start, avail_wk_end
 								FROM ParkBay
@@ -310,15 +315,50 @@ function makeBooking($memberNo,$car,$bayID,$bookingDate,$bookingHour,$duration) 
 		else {
 			$success = "fail";
 			print "<br />The Bay is Unavailable For The Requested Time";
+			$db->rollBack();
 			return;
 		}
 		
 	} catch (PDOException $e) {
 		$sucess = "fail";
 		print "<br />The Bay Is Unavailable For The Requested Time";
+		$db->rollBack();
 		return;
 	}
-	*/
+	
+	//Check that the bay is not already booked at that time
+	try {
+		$stmt = $db->prepare("SELECT bookingHour, duration
+								FROM Booking
+								WHERE bayID = :bayID AND bookingDate = :bookingDate");
+		
+		$stmt->bindValue(':bayID', $bayID);
+		$stmt->bindValue(':bookingDate', $bookingDate);
+		
+		$stmt->execute();
+		$bookingInfo = $stmt->fetchAll();
+		
+		$stmt->closeCursor();
+		
+		if (!$bookingInfo) {
+			$success = "success";
+		}
+		else {
+			foreach ($bookingInfo as $booking) {
+				if (($booking['bookinghour'] + $booking['duration']) >= $bookingHour || ($bookingHour + $duration) <= $booking['bookinghour']) {
+					    print "Error Creating Booking, The Park Bay Is Already Booked At This Time.";
+                        $db->rollBack(); 
+                        return;
+				}
+			}
+		}
+	} catch (PDOException $e) {
+		$success = "fail";
+		print "Error creating booking: That booking already exists";
+        $db->rollBack(); 
+        return;
+	}
+	
 	// inserting booking into database, exceptions are raised if the booking already exists
 	try {				
 		$stmt = $db->prepare("SELECT * FROM makeBooking(:bayID, :bookingDate, :bookingHour, :duration, :memberNo, :car)");
@@ -337,8 +377,31 @@ function makeBooking($memberNo,$car,$bayID,$bookingDate,$bookingHour,$duration) 
 	} catch (PDOException $e) { 
 		$success = "fail";
         print "<br />Error creating booking: That booking already exists";
+		$db->rollBack();
         return;
 	}
+	
+	//Use the unique triple of bayID, bookingDate and bookingHour to obtain the default created bookingID
+	try {
+        $stmt = $db->prepare('SELECT BookingID 
+								FROM Booking 
+								WHERE bayID = :bayID AND bookingDate = :bookingDate AND bookingHour = :bookingHour');
+        
+        $stmt->bindValue(':bayID', $bayID);
+        $stmt->bindValue(':bookingDate', $bookingDate);
+        $stmt->bindValue(':bookingHour', $bookingHour);
+    
+        $stmt->execute();
+        
+        $bookingID = $stmt->fetchColumn();
+        
+        $stmt->closeCursor();		
+	} catch (PDOException $e) { 
+        $success = 'fail';
+        print "Error Reading Booking ID";
+        $db->rollBack(); 
+        return;
+    }
 	
 	// retrieve bookingID and calculating the cost to return into an array after successfully inserting a booking to the database
 	try {
@@ -366,8 +429,12 @@ function makeBooking($memberNo,$car,$bayID,$bookingDate,$bookingHour,$duration) 
 	} catch (PDOException $e) {
 		$success = "fail";
 		print "<br />Error reading Booking ID or reading plan hourly rate";
+		$db->rollBack();
 		return;
 	}
+	
+	// commit the transaction if everything worked
+	$db->commit();
 	
 	return array(
 		'status'=>$success,

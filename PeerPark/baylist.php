@@ -37,11 +37,12 @@ try {
     if(count($bays)>0) {
 		echo '<table>';
 		echo '<thead>';
-		echo '<tr><th>Bay ID</th><th>Bay Site</th><th>Address</th><th> Available</th></tr>';
+		echo '<tr><th>Bay ID</th><th>Bay Site</th><th>Address</th><th>Weekday Availability</th><th>Weekend Availability</th></tr>';
 		echo '</thead>';
 		echo '<tbody>';
 		foreach($bays as $bay) {
-			echo '<tr><td><a href="baydetail.php?bayID=',$bay['bayid'],'">',$bay['bayid'],'</td><td>',$bay['site'], '</td><td>',$bay['address'], '</td><td><a href="newbooking.php?bayID=',$bay['bayID'],'">',$bay['avail']==true ? 'yes' : 'no', '</td></tr>';
+			echo '<tr><td><a href="baydetail.php?bayID=',$bay['bayID'],'">',$bay['bayid'],'</td><td>',$bay['site'], '</td><td>',$bay['address'], 
+			'</td><td><a href="newbooking.php?bayID=',$bay['bayID'],'">',$bay['avail_wk_start'], ' to ', $bay['avail_wk_end'] , '</td><td><a href="newbooking.php?bayID=',$bay['bayID'],'">',$bay['avail_wend_start'], ' to ', $bay['avail_wend_end'] , '</td></tr>';
 		}
 		echo '</tbody>';
 		echo '</table>';
