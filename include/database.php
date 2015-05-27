@@ -153,11 +153,47 @@ function getUserDetails($user) {
 function searchBay($address) {
     // STUDENT TODO:
     // Change lines below with code to retrieve the Bays with similar address from the database
+
+$db =connect();
+try{
+
+    //Regex the address and return all parkbays that match
+    //Use lower() to make the search case insensitive
+    // $stmt = $db->prepare("SELECT * FROM ParkBay WHERE lower(address) SIMILAR TO lower('Sydney%')");
+    $stmt = $db->prepare("SELECT * FROM ParkBay WHERE lower(address) SIMILAR TO lower(':address%')");
+    //$stmt = $db->prepare("SELECT * FROM ParkBay");
+    $stmt->bindValue(':address', $address);
+    $stmt->execute();
+    $bayList = $stmt->fetchAll();
+    $stmt->closeCursor();
+
+//SELECT * FROM ParkBay WHERE address SIMILAR TO 'Sydney%' OR address SIMILAR TO '%Sydney' OR address SIMILAR TO '%Sydney%'
+    //SELECT * FROM ParkBay WHERE lower(address) SIMILAR TO lower('sydney%')
+
+}catch(PDOException $e){
+    print "No bays match that search."; 
+    return;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 $results = array(
         array('bayID'=>954673, 'site'=> 'Sydney Uni Camp1', 'address'=> 'Search Add1', 'avail'=>true),
         array('bayID'=>344578, 'site'=> 'Sydney Uni Camp2', 'address'=> 'Search Add2', 'avail'=>false)
     );
-    return $results;
+    //return $results;
+    return $bayList;
 }
 
 /**
@@ -171,12 +207,30 @@ function getBays() {
     // Replace lines below with code to get list of bays from the database
     // Example booking info - this should come from a query. Format is
 	// (bay ID, site, address, availability of the bay)
-    $results = array(
-        array('bayID'=>896541, 'site'=> 'Library', 'address'=> 'Glebe Point Road', 'avail'=>true),
-        array('bayID'=>954673, 'site'=> 'Sydney Uni','address'=> 'Camperdown', 'avail'=>true),
-		array('bayID'=>321567, 'site'=> 'UTS', 'address'=> 'Ultimo', 'avail'=>false)
-    );
-    return $results;
+
+    $db =connect();
+    try{
+
+    //Regex the address and return all parkbays that match
+        $stmt = $db->prepare("SELECT * FROM ParkBay");
+       
+        $stmt->execute();
+        $bayList = $stmt->fetchAll();
+        $stmt->closeCursor();
+
+
+
+    }catch(PDOException $e){
+        print "Error fetching all bays."; 
+        return;
+    }
+
+  //   $results = array(
+  //       array('bayID'=>896541, 'site'=> 'Library', 'address'=> 'Glebe Point Road', 'avail'=>true),
+  //       array('bayID'=>954673, 'site'=> 'Sydney Uni','address'=> 'Camperdown', 'avail'=>true),
+		// array('bayID'=>321567, 'site'=> 'UTS', 'address'=> 'Ultimo', 'avail'=>false)
+  //   );
+    return $bayList;
 }
 
 
@@ -355,6 +409,7 @@ try {
     //$sizeFits = true;
     for($i = 0; $i < 3; $i++){
         if($carDimensions[0][$i] > $bayDimensions[0][$i]){
+        //if($carDimensions[$i] > $bayDimensions[$i]){
 
             print "\nCar dimesions too large for bay";
             return;
@@ -706,6 +761,39 @@ function getInvoice($memberNo){
     //print_r($results);
 
     return $results;
+}
+
+function getPreviousInvoice($memberNo, $month, $year){
+
+    $db = connect();
+
+ try {
+   
+        $stmt = $db->prepare("SELECT bookingID, duration
+                                FROM Booking 
+                                WHERE date_part('month', bookingDate)=:month 
+                                AND date_part('year', bookingDate)=:year 
+                                AND memberNo=:memberNo");
+
+        $stmt->bindValue(':memberNo', $memberNo, PDO::PARAM_INT);
+        $stmt->bindValue(':month', $month);
+        $stmt->bindValue(':year', $year);
+
+
+
+        $stmt->execute();
+
+        $results = $stmt->fetchAll();
+        $stmt->closeCursor(); 
+
+        }catch (PDOException $e) { 
+        print "Error generating invoice"; 
+        return;
+    }
+    //print_r($results);
+  
+    return $results;
+}
 // /** Generates variables for an old invoice */
 // function getOldInvoice($SESSION['memberNo'], $month, $year){
 
@@ -750,7 +838,7 @@ function getInvoice($memberNo){
 
 // }
 
-}
+
 
 
 ?>

@@ -51,11 +51,18 @@ if (!$submit || $booking==null || $booking['status'] != 'success') {
 	$duration = isset($_REQUEST['duration']) ? $_REQUEST['duration'] : 1;	
 	//Default for bayID is the members preffered bay
 	$defaultBayID = getPrefBayInformation($_SESSION['memberNo']);
-	$bayID = isset($_REQUEST['bayID']) ? $_REQUEST['bayID'] : $defaultBayID[0]['bayid'];
+	$empty = array();
+	if($defaultBayID == $empty){
+		//If the memeber has no preffered bay then deafult will be 1
+		$bayID = isset($_REQUEST['bayID']) ? $_REQUEST['bayID'] : 1;
+	}else{
+		//print_r($defaultBayID);
+		$bayID = isset($_REQUEST['bayID']) ? $_REQUEST['bayID'] : $defaultBayID[0]['bayid'];
+	}
 
 ?>
     <form action="newbooking.php" id="newbooking" method="post">
-	    <label>Bay ID <input type="number" name="bayID" value="<?php echo $bayID;?>"/></label><br />
+	    <label>Bay ID <input type="number" name="bayID" min="1" value="<?php echo $bayID;?>"/></label><br />
         <label>Car <input type="text" name="carname" value="<?php echo $carname;?>"/></label><br />
 		<label> date <input type="date" name="parkdate"  value="<?php echo $parkdate;?>"/></label><br />
 		<label>time <input type="time" step="3600" name="parktime" min="00" value="<?php echo $parktime;?>"/></label><br />
