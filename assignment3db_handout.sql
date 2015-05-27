@@ -431,9 +431,74 @@ END;
 $$ LANGUAGE plpgsql;
 
 
+--getInvoice() in database.php
+CREATE OR REPLACE FUNCTION getInvoice
+(arg1 INTEGER) RETURNS TABLE (
+	bookingID INTEGER,
+	duration INTEGER,
+	bayID INTEGER
+) AS $$
+BEGIN
+	RETURN QUERY
+		SELECT Booking.bookingID, Booking.duration, Booking.bayID
+		FROM Booking
+		WHERE date_part('month', Booking.bookingDate) = date_part('month', CURRENT_DATE)
+		AND   date_part('year', Booking.bookingDate) = date_part('year', CURRENT_DATE)
+		AND   Booking.memberNo = arg1;
+END;
+$$ LANGUAGE plpgsql;
 
 
+-- prevInvoice()
+CREATE OR REPLACE FUNCTION getPreviousInvoice
+(arg1 INTEGER, arg2 INTEGER, arg3 INTEGER) RETURNS TABLE (
+	bookingID INTEGER,
+	duration INTEGER,
+	bayID INTEGER	
+) AS $$
+BEGIN
+	RETURN QUERY
+		SELECT Booking.bookingID, Booking.duration, Booking.bayID
+		FROM Booking 
+		WHERE date_part('month', Booking.bookingDate) = arg2
+		AND date_part('year', Booking.bookingDate) = arg3
+		AND Booking.memberNo = arg1;
+END;
+$$ LANGUAGE plpgsql;
 
+-- allInvoices()
+/*
+CREATE OR REPLACE FUNCTION getAllInvoices
+(arg1 INTEGER) RETURNS TABLE (
+	bookingID INTEGER,
+	bookingDate DATE,
+	duration INTEGER,
+	bayID INTEGER
+) AS $$
+BEGIN
+	RETURN QUERY
+		SELECT Booking.bookingID, Booking.bookingDate, Booking.duration, Booking.bayID
+		FROM Booking
+		WHERE Booking.memberNo = arg1
+		ORDER BY Booking.bookingDate DESC;
+END;
+$$ LANGUAGE plpgsql;
+*/
+
+CREATE OR REPLACE FUNCTION getInvoiceDates
+(arg1 INTEGER) RETURNS TABLE (
+	bookingMonth FLOAT,
+	bookingYear FLOAT
+	
+) AS $$
+BEGIN
+	RETURN QUERY
+		SELECT DISTINCT date_part('month', Booking.bookingDate) as month, date_part('year', Booking.bookingDate) as year
+		FROM Booking
+		WHERE Booking.memberNo = arg1
+		ORDER BY year DESC, month DESC;
+END;
+$$ LANGUAGE plpgsql;
 
 
 

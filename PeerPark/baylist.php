@@ -41,8 +41,8 @@ try {
 		echo '</thead>';
 		echo '<tbody>';
 		foreach($bays as $bay) {
-			echo '<tr><td><a href="baydetail.php?bayID=',$bay['bayID'],'">',$bay['bayid'],'</td><td>',$bay['site'], '</td><td>',$bay['address'], 
-			'</td><td><a href="newbooking.php?bayID=',$bay['bayID'],'">',$bay['avail_wk_start'], ' to ', $bay['avail_wk_end'] , '</td><td><a href="newbooking.php?bayID=',$bay['bayID'],'">',$bay['avail_wend_start'], ' to ', $bay['avail_wend_end'] , '</td></tr>';
+			echo '<tr><td><a href="baydetail.php?bayID=',$bay['bayid'],'">',$bay['bayid'],'</td><td>',$bay['site'], '</td><td>',$bay['address'], 
+			'</td><td><a href="newbooking.php?bayID=',$bay['bayid'],'">',$bay['avail_wk_start'], ' to ', $bay['avail_wk_end'] , '</td><td><a href="newbooking.php?bayID=',$bay['bayid'],'">',$bay['avail_wend_start'], ' to ', $bay['avail_wend_end'] , '</td></tr>';
 		}
 		echo '</tbody>';
 		echo '</table>';

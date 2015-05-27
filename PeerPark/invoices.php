@@ -15,38 +15,18 @@ htmlHead();
 $ratePlan = getPlanDetails($_SESSION['memberNo']);
 
 $bookings = getInvoice($_SESSION['memberNo']);
-// $defaultMonth = 1;
-// $defautYear = 1950;
-//Give the variables default values when the page is loaded
-// $_REQUEST['month'] = 1;
-// $_REQUEST['year'] = 1950;
 
-// if($defautYear == $_REQUEST['year']){
-
-// 	$previous = getPreviousInvoice($_SESSION['memberNo'], $defaultMonth, $defaultYear);
-// }else{
 $month = isset($_REQUEST['month']) ? $_REQUEST['month'] : 1;
-$year = isset($_REQUEST['year']) ? $_REQUEST['year'] : 1950;
+$year = isset($_REQUEST['year']) ? $_REQUEST['year'] : 2000;
 
-//$previous = getPreviousInvoice($_SESSION['memberNo'], $_REQUEST['month'], $_REQUEST['year']);
 $previous = getPreviousInvoice($_SESSION['memberNo'], $month, $year);
-// }
-
-
-
-// print_r($previous);
-
-
-//Current Invoice (for the previous month)
-// echo '<h2>Current Invoice for \'04-2015\'</h2> ',$invoice[0]['memberno'];
-
 
 //Can view any previous months invoice
 echo '<h2>Current Rate Plan</h2> ', 'Hourly Rate: $', number_format($ratePlan['hourly_rate']/100, 2, '.', ''), ' Monthly Fee: $', number_format($ratePlan['monthly_fee']/100, 2, '.', '');
 echo '</br>';
+
 //Do a for each loop to list all booking ids and their duration and cost
-//echo 'Booking ID: ', $ratePlan['hourly_rate'], ' Duration: ', $ratePlan['monthly_fee'], ' Booking Total Cost: ', $ratePlan['monthly_fee'];
-if(count($bookings)>0) {
+	if(count($bookings)>0) {
 		echo '<table>';
 		echo '<thead>';
 		echo '<tr><th>Current Invoice For This Month</th></tr>';
@@ -58,7 +38,6 @@ if(count($bookings)>0) {
 		foreach($bookings as $booking) {
             echo '<tr><td>', 'Booking ID : ', $booking['bookingid'],'<br />Bay ID: ', $booking['bayid'] ,'<br /> Duration: ', $booking['duration'], '<br /> Booking Cost: $', number_format($booking['duration']*$ratePlan['hourly_rate']/100, 2, '.', ''), '</td></tr>';
             $sum += $booking['duration']*$ratePlan['hourly_rate'];
-			//echo '<tr><td>', 'Rego Number: ', $car['regno'],'</td></tr>';
 		}
 		echo '<tr><td>', 'Monthly Total: $', number_format($sum/100, 2, '.', ''), '</td></tr>';
            
@@ -82,7 +61,7 @@ echo '<h2>Retrieve A Previous Invoice</h2> ';
 	<?php
 
 //Display a previous invoice
-if(count($previous)>0) {
+	if(count($previous)>0) {
 		echo '<table>';
 		echo '<thead>';
 		echo '<tr><th>Previous Invoice For ', $_REQUEST['month'], '/', $_REQUEST['year'], '</th></tr>';
@@ -94,17 +73,52 @@ if(count($previous)>0) {
 		foreach($previous as $prev) {
             echo '<tr><td>', 'Booking ID : ', $prev['bookingid'], '<br />Bay ID: ', $prev['bayid'] ,'<br /> Duration: ', $prev['duration'], '<br /> Booking Cost: $', number_format($prev['duration']*$ratePlan['hourly_rate']/100, 2, '.', ''), '</td></tr>';
             $sum += $prev['duration']*$ratePlan['hourly_rate'];
-			//echo '<tr><td>', 'Rego Number: ', $car['regno'],'</td></tr>';
 		}
 		echo '<tr><td>', 'Monthly Total: $', number_format($sum/100, 2, '.', ''), '</td></tr>';
            
 
 		echo '</tbody>';
 		echo '</table>';
-    }else{
-    	//echo '</br> No Park Bay Bookings For ', $_REQUEST['month'], '/', $_REQUEST['year'],'</br>';
     }
+	
+	$allInvoices = getInvoiceDates($_SESSION['memberNo']);
+	echo '<h2>Retrieve All Invoices</h2> ';
+	
+	?>
+        <form action="invoices.php" id="invoices" method="post">
+            <br /><input name = 'all' type=submit value="Retrieve All Invoices"/>
+        </form>
+	<?php
+	//Display all invoices if clicked
+	if(isset($_REQUEST['all'])){
+		if(count($allInvoices)> 0) {
+			
+			echo '<table>';
+			echo '<thead>';
+			echo '<tr><th>All Invoices</th></tr>';
+			echo '</thead>';
+			echo '<tbody>';
+			
+			$sum = $ratePlan['monthly_fee'];
+			for ($i = 0; $i < count($allInvoices); $i++) {
+				echo '<tr><th>Invoice Date - ', $allInvoices[$i]['bookingmonth'] . '/', $allInvoices[$i]['bookingyear'] , '</th></tr>';
+				$invoice = getPreviousInvoice($_SESSION['memberNo'], $allInvoices[$i]['bookingmonth'], $allInvoices[$i]['bookingyear']);
+				
+				foreach($invoice as $booking) {
+					echo '<tr><td>', 'Booking ID : ', $booking['bookingid'],'<br />Bay ID: ', $booking['bayid'] ,'<br /> Duration: ', $booking['duration'], '<br /> Booking Cost: $', number_format($booking['duration']*$ratePlan['hourly_rate']/100, 2, '.', ''), '</td></tr>';
+					$sum += $booking['duration']*$ratePlan['hourly_rate'];
+				}
+				
+			}
+			
+			echo '<tr><td>', 'Total of all invoices : $', number_format($sum/100, 2, '.', ''), '</td></tr>';
+			   
 
-
+			echo '</tbody>';
+			echo '</table>';
+			
+		}
+	}
+	
 htmlFoot();
 ?>

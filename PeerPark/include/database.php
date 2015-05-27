@@ -103,7 +103,7 @@ function searchBay($address) {
 	$db = connect();
 	
 	try {
-		$stmt = $db->prepare("SELECT bayID, site, address 
+		$stmt = $db->prepare("SELECT *
 								FROM ParkBay
 								WHERE lower(address) SIMILAR TO lower('%' || :address || '%') OR lower(site) SIMILAR TO lower('%' || :address || '%')
 								ORDER BY bayID");
@@ -196,8 +196,8 @@ function getBayInformation($BayID) {
 		
 		$stmt->closeCursor();
 	} catch (PDOException $e) {
-		print "Error getting bay details: " - $e->getMessage();
-		die();
+		print "Error getting bay details.";
+		return;
 	}
 	
 	return $results[0];
@@ -298,6 +298,7 @@ function makeBooking($memberNo,$car,$bayID,$bookingDate,$bookingHour,$duration) 
 	}
 	
 	//Check that the bay is available for the requested time
+	/*
 	try {
 		$stmt = $db->prepare("SELECT avail_wk_start, avail_wk_end
 								FROM ParkBay
@@ -325,6 +326,7 @@ function makeBooking($memberNo,$car,$bayID,$bookingDate,$bookingHour,$duration) 
 		$db->rollBack();
 		return;
 	}
+	*/
 	
 	//Check that the bay is not already booked at that time
 	try {
@@ -557,11 +559,7 @@ function getInvoice($memberNo) {
 	$db = connect();
 	
 	try {
-		$stmt = $db->prepare("SELECT bookingID, duration, bayID
-								FROM Booking
-								WHERE date_part('month', bookingDate) = date_part('month', CURRENT_DATE)
-								AND   date_part('year', bookingDate) = date_part('year', CURRENT_DATE)
-								AND   memberNo = :memberNo");
+		$stmt = $db->prepare("SELECT * FROM getInvoice(:memberNo)");
 								
 		$stmt->bindValue(':memberNo', $memberNo, PDO::PARAM_INT);
 		
@@ -582,26 +580,47 @@ Retrieves invoice of the previous month
 */
 function getPreviousInvoice($memberNo, $month, $year){
     $db = connect();
+	
  try {
-   
-        $stmt = $db->prepare("SELECT bookingID, duration, bayID
-                                FROM Booking 
-                                WHERE date_part('month', bookingDate)=:month 
-                                AND date_part('year', bookingDate)=:year 
-                                AND memberNo=:memberNo");
-        $stmt->bindValue(':memberNo', $memberNo, PDO::PARAM_INT);
-        $stmt->bindValue(':month', $month);
-        $stmt->bindValue(':year', $year);
-        $stmt->execute();
-        $results = $stmt->fetchAll();
-        $stmt->closeCursor(); 
-        }catch (PDOException $e) { 
-        print "Error generating invoice"; 
-        return;
-    }
-    //print_r($results);
+	$stmt = $db->prepare("SELECT * FROM getPreviousInvoice(:memberNo, :month, :year)");
+							
+	$stmt->bindValue(':memberNo', $memberNo, PDO::PARAM_INT);
+	$stmt->bindValue(':month', $month);
+	$stmt->bindValue(':year', $year);
+	
+	$stmt->execute();
+	$results = $stmt->fetchAll();
+	
+	$stmt->closeCursor(); 
+	} catch (PDOException $e) { 
+	print "Error generating invoice"; 
+	return;
+	}
   
     return $results;
+}
+
+/**
+Retrieves all invoices available from that member
+*/
+function getInvoiceDates($memberNo) {
+	$db = connect();
+	
+	try {
+		$stmt = $db->prepare("SELECT * FROM getInvoiceDates(:memberNo)");
+								
+		$stmt->bindValue(':memberNo', $memberNo, PDO::PARAM_INT);
+		
+		$stmt->execute();
+		$results = $stmt->fetchAll();
+		
+		$stmt->closeCursor();
+	} catch (PDOException $e) {
+		print "Error generating invoice";
+		return;
+	}
+	
+	return $results;
 }
 
 ?>
