@@ -298,11 +298,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 	
--- getPrefBayInformation() in database.php CANT START UNTIL AVAILABILITY WORKS
-/*
+-- getPrefBayInformation() in database.php
+
 CREATE OR REPLACE FUNCTION getPrefBayInformation
 (arg1 INTEGER) RETURNS TABLE (
-	bayID SERIAL,
+	bayID INTEGER,
 	owner INTEGER,
 	gps_lat FLOAT,
 	gps_long FLOAT,
@@ -318,13 +318,13 @@ CREATE OR REPLACE FUNCTION getPrefBayInformation
 	avail_wend_end SMALLINT
 ) AS $$
 BEGIN
-RETURN QUERY
-SELECT ParkBay.bayID, ParkBay.owner, ParkBay.gps_lat, ParkBay.gps_long, ParkBay.address , ParkBay.width, ParkBay.height, ParkBay.length, ParkBay.pod, ParkBay.site, ParkBay.avail_wk_start, ParkBay.avail_wk_end, ParkBay.avail_wend_start, ParkBay.avail_wend_end
-									FROM Member LEFT OUTER JOIN ParkBay ON (Member.prefBay = ParkBay.bayID)
-									WHERE Member.memberNo = arg1;
+	RETURN QUERY
+		SELECT ParkBay.bayID, ParkBay.owner, ParkBay.gps_lat, ParkBay.gps_long, ParkBay.address , ParkBay.width, ParkBay.height, ParkBay.length, ParkBay.pod, ParkBay.site, ParkBay.avail_wk_start, ParkBay.avail_wk_end, ParkBay.avail_wend_start, ParkBay.avail_wend_end
+		FROM Member LEFT OUTER JOIN ParkBay ON (Member.prefBay = ParkBay.bayID)
+		WHERE Member.memberNo = arg1;
 END;
 $$ LANGUAGE plpgsql;
-*/
+
 
 -- getOpenBookings() in database.php
 CREATE OR REPLACE FUNCTION getOpenBookings
@@ -466,24 +466,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- allInvoices()
-/*
-CREATE OR REPLACE FUNCTION getAllInvoices
-(arg1 INTEGER) RETURNS TABLE (
-	bookingID INTEGER,
-	bookingDate DATE,
-	duration INTEGER,
-	bayID INTEGER
-) AS $$
-BEGIN
-	RETURN QUERY
-		SELECT Booking.bookingID, Booking.bookingDate, Booking.duration, Booking.bayID
-		FROM Booking
-		WHERE Booking.memberNo = arg1
-		ORDER BY Booking.bookingDate DESC;
-END;
-$$ LANGUAGE plpgsql;
-*/
+-- getInvoiceDates()
 
 CREATE OR REPLACE FUNCTION getInvoiceDates
 (arg1 INTEGER) RETURNS TABLE (
@@ -499,9 +482,6 @@ BEGIN
 		ORDER BY year DESC, month DESC;
 END;
 $$ LANGUAGE plpgsql;
-
-
-
 
 
 

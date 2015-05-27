@@ -58,7 +58,7 @@ function checkLogin($name,$pass) {
 		$stmt->closeCursor();
 	} catch (PDOException $e) {
 		print "Error finding username or password.";
-		die();
+		return;
 	}
 	
 	if ($results) {
@@ -88,7 +88,7 @@ function getUserDetails($user) {
 		$stmt->closeCursor();
 	} catch (PDOException $e) {
 		print "Error finding user details.";
-		die();
+		return;
 	}
 	
 	return $results[0];
@@ -116,7 +116,7 @@ function searchBay($address) {
 		$stmt->closeCursor();	
 	} catch (PDOException $e) {
 		print "Error finding searching the bay.";
-		die();
+		return;
 	}
 	
     return $results;
@@ -141,7 +141,7 @@ function getBays() {
 		$stmt->closeCursor();
 	} catch (PDOException $e) {
 		print "Error retrieving list of bays.";
-		die();
+		return;
 	}
 	
     return $results;
@@ -157,9 +157,7 @@ function getPrefBayInformation($memberNo) {
 	$db = connect();
 	
 	try {
-		$stmt = $db->prepare("SELECT bayID, owner, gps_lat, gps_long, address , width, height, length, pod, site, avail_wk_start, avail_wk_end, avail_wend_start, avail_wend_end
-									FROM Member LEFT OUTER JOIN ParkBay ON (prefBay = bayID)
-									WHERE Member.memberNo = :memberNo");
+		$stmt = $db->prepare("SELECT * FROM getPrefBayInformation(:memberNo)");
 									
 		$stmt->bindValue(':memberNo', $memberNo);
 		
@@ -169,7 +167,7 @@ function getPrefBayInformation($memberNo) {
 		$stmt->closeCursor();	
 	} catch (PDOException $e) {
 		print "Error finding preferred bay details.";
-		die();
+		return;
 	}
 	
 	return $results;
@@ -222,8 +220,8 @@ function getOpenBookings($memberNo) {
 		
 		$stmt->closeCursor();
 	} catch (PDOException $e) { 
-        print "Error getting list of bookings : " - $e->getMessage(); 
-        die();
+        print "Error getting list of bookings."; 
+        return;
 	}
 	
     return $results;
@@ -296,37 +294,6 @@ function makeBooking($memberNo,$car,$bayID,$bookingDate,$bookingHour,$duration) 
 		$db->rollBack();
         return;
 	}
-	
-	//Check that the bay is available for the requested time
-	/*
-	try {
-		$stmt = $db->prepare("SELECT avail_wk_start, avail_wk_end
-								FROM ParkBay
-								WHERE bayID = :bayID");
-		
-		$stmt->bindValue(':bayID', $bayID);
-		
-		$stmt->execute();
-		$results = $stmt->fetchAll();
-		$stmt->closeCursor();
-		
-		if ($results[0]['avail_wk_start'] <= $bookingHour && $results[0]['avail_wk_end'] >= ($bookingHour + $duration)) {
-			$success = "success";
-		}
-		else {
-			$success = "fail";
-			print "<br />The Bay is Unavailable For The Requested Time";
-			$db->rollBack();
-			return;
-		}
-		
-	} catch (PDOException $e) {
-		$sucess = "fail";
-		print "<br />The Bay Is Unavailable For The Requested Time";
-		$db->rollBack();
-		return;
-	}
-	*/
 	
 	//Check that the bay is not already booked at that time
 	try {
@@ -469,8 +436,8 @@ function getBookingInfo($bookingID) {
 		
 		$stmt->closeCursor();
 	} catch (PDOException $e) { 
-        print "Error getting booking details: " - $e->getMessage(); 
-        die();
+        print "Error getting booking details."; 
+        return;
 	}
 
 	return $results[0];
@@ -497,8 +464,8 @@ function getCars($memberNo) {
 		
 		$stmt->closeCursor();
 	} catch (PDOException $e) { 
-        print "Error getting car details: " - $e->getMessage(); 
-        die();
+        print "Error getting car details."; 
+        return;
 	}
 	
     return $results;
@@ -522,8 +489,8 @@ function getNoBookings($memberNo) {
 		
 		$stmt->closeCursor();
 	} catch (PDOException $e) {
-		print "Error getting number of bookings: " - $e->getMessage();
-		die();
+		print "Error getting number of bookings.";
+		return;
 	}
 	
 	return $results;

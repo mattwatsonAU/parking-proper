@@ -9023,9 +9023,7 @@ ALTER TABLE PeerPark.Member
 
 ALTER TABLE member ALTER COLUMN prefBillingNo SET NOT NULL;
 
-/* Query Testing */
-									    
-SELECT * FROM getInvoiceDates(1)								
+/* Query Testing */			
 
 			
 						
